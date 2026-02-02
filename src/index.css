@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "@fontsource/roboto/400.css";
+@import "@fontsource/roboto/500.css";
+@import "@fontsource/roboto/700.css";
+@import "@fontsource/roboto-slab/400.css";
+@import "@fontsource/roboto-slab/600.css";
+@import "@fontsource/roboto-slab/700.css";
+
+/* Carewell Supports Design System */
+
+@layer base {
+  :root {
+    --background: 220 33% 97%;
+    --foreground: 220 6% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 6% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 6% 13%;
+
+    --primary: 217 82% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 137 52% 43%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 45 100% 51%;
+    --accent-foreground: 220 6% 13%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 217 82% 50%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --success: 137 52% 43%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 220 6% 13%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(217 82% 50%) 0%, hsl(217 82% 40%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(137 52% 43%) 0%, hsl(137 52% 35%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(45 100% 51%) 0%, hsl(35 100% 50%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(220 33% 97%) 0%, hsl(220 33% 94%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 6% 13% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(220 6% 13% / 0.08), 0 2px 4px -2px hsl(220 6% 13% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(220 6% 13% / 0.1), 0 4px 6px -4px hsl(220 6% 13% / 0.05);
+    --shadow-xl: 0 20px 25px -5px hsl(220 6% 13% / 0.1), 0 8px 10px -6px hsl(220 6% 13% / 0.05);
+    --shadow-glow: 0 0 40px hsl(217 82% 50% / 0.15);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 217 82% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 92%;
+    --sidebar-accent-foreground: 220 6% 13%;
+    --sidebar-border: 220 20% 88%;
+    --sidebar-ring: 217 82% 50%;
+  }
+
+  .dark {
+    --background: 220 15% 10%;
+    --foreground: 220 20% 95%;
+
+    --card: 220 15% 13%;
+    --card-foreground: 220 20% 95%;
+
+    --popover: 220 15% 13%;
+    --popover-foreground: 220 20% 95%;
+
+    --primary: 217 82% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 137 52% 48%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 45 100% 55%;
+    --accent-foreground: 220 6% 13%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 217 82% 55%;
+
+    --sidebar-background: 220 15% 10%;
+    --sidebar-foreground: 220 20% 95%;
+    --sidebar-primary: 217 82% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 220 20% 95%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 217 82% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto Slab', serif;
+  }
+}
+
+@layer components {
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-hero);
+  }
+
+  .text-gradient-success {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-success);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-card-hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+}
