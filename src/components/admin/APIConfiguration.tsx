@@ -6,7 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Plus, Trash2, CreditCard, Mail, Key, AlertTriangle } from "lucide-react";
+import { 
+  Loader2, 
+  Save, 
+  Plus, 
+  Trash2, 
+  CreditCard, 
+  Mail, 
+  Key, 
+  AlertTriangle,
+  Settings,
+  Eye,
+  EyeOff,
+  Shield,
+  Globe
+} from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -23,6 +37,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 interface AdminSetting {
   id: string;
@@ -41,6 +57,7 @@ export const APIConfiguration = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editedSettings, setEditedSettings] = useState<Record<string, string>>({});
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newSetting, setNewSetting] = useState({
     setting_key: "",
@@ -61,7 +78,6 @@ export const APIConfiguration = () => {
       if (error) throw error;
       setSettings(data || []);
       
-      // Initialize edited settings
       const initial: Record<string, string> = {};
       data?.forEach((s) => {
         initial[s.setting_key] = s.setting_value || "";
@@ -70,7 +86,7 @@ export const APIConfiguration = () => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Error loading settings",
         description: error.message,
       });
     } finally {
@@ -97,13 +113,13 @@ export const APIConfiguration = () => {
       }
       toast({
         title: "Settings Saved",
-        description: "All settings have been updated successfully.",
+        description: "All configuration changes have been saved successfully.",
       });
       fetchSettings();
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Error saving settings",
         description: error.message,
       });
     } finally {
@@ -148,7 +164,7 @@ export const APIConfiguration = () => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Error adding setting",
         description: error.message,
       });
     }
@@ -166,7 +182,7 @@ export const APIConfiguration = () => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Error deleting setting",
         description: error.message,
       });
     }
@@ -174,6 +190,10 @@ export const APIConfiguration = () => {
 
   const updateEditedSetting = (key: string, value: string) => {
     setEditedSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const toggleSecretVisibility = (key: string) => {
+    setVisibleSecrets((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   // Group settings by category
@@ -187,8 +207,20 @@ export const APIConfiguration = () => {
     (s) => !paymentSettings.includes(s) && !emailSettings.includes(s)
   );
 
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "payment":
+        return <CreditCard className="w-5 h-5" />;
+      case "email":
+        return <Mail className="w-5 h-5" />;
+      default:
+        return <Globe className="w-5 h-5" />;
+    }
+  };
+
   const renderSettingInput = (setting: AdminSetting) => {
     const value = editedSettings[setting.setting_key] ?? "";
+    const isVisible = visibleSecrets[setting.setting_key];
 
     if (setting.setting_type === "boolean") {
       return (
@@ -200,159 +232,234 @@ export const APIConfiguration = () => {
     }
 
     return (
-      <Input
-        type={setting.is_secret ? "password" : "text"}
-        value={value}
-        onChange={(e) => updateEditedSetting(setting.setting_key, e.target.value)}
-        placeholder={setting.is_secret ? "••••••••" : "Enter value..."}
-        className="max-w-md"
-      />
+      <div className="relative flex-1 max-w-md">
+        <Input
+          type={setting.is_secret && !isVisible ? "password" : "text"}
+          value={value}
+          onChange={(e) => updateEditedSetting(setting.setting_key, e.target.value)}
+          placeholder={setting.is_secret ? "••••••••••••" : "Enter value..."}
+          className="pr-10 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
+        />
+        {setting.is_secret && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+            onClick={() => toggleSecretVisibility(setting.setting_key)}
+          >
+            {isVisible ? (
+              <EyeOff className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <Eye className="w-4 h-4 text-muted-foreground" />
+            )}
+          </Button>
+        )}
+      </div>
     );
   };
 
   const SettingRow = ({ setting }: { setting: AdminSetting }) => (
-    <div className="flex items-center justify-between py-4 border-b last:border-0">
-      <div className="space-y-1">
-        <Label className="font-medium">
-          {setting.setting_key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center justify-between py-4 px-4 rounded-lg hover:bg-muted/50 transition-colors group"
+    >
+      <div className="space-y-1 flex-1">
+        <div className="flex items-center gap-2">
+          <Label className="font-medium">
+            {setting.setting_key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+          </Label>
           {setting.is_secret && (
-            <Key className="w-3 h-3 inline ml-2 text-muted-foreground" />
+            <Badge variant="outline" className="text-xs gap-1 font-normal">
+              <Key className="w-3 h-3" />
+              Secret
+            </Badge>
           )}
-        </Label>
+        </div>
         {setting.description && (
           <p className="text-sm text-muted-foreground">{setting.description}</p>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {renderSettingInput(setting)}
         <Button
           variant="ghost"
           size="sm"
-          className="text-destructive hover:text-destructive/90"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={() => handleDeleteSetting(setting.id)}
         >
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
-    </div>
+    </motion.div>
+  );
+
+  const SettingsSection = ({ 
+    title, 
+    description, 
+    icon, 
+    settings,
+    iconBg,
+    iconColor 
+  }: { 
+    title: string; 
+    description: string; 
+    icon: React.ReactNode;
+    settings: AdminSetting[];
+    iconBg: string;
+    iconColor: string;
+  }) => (
+    <Card className="border-0 shadow-md">
+      <CardHeader className="border-b bg-gradient-to-r from-muted/50 to-transparent">
+        <div className="flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl ${iconBg}`}>
+            <span className={iconColor}>{icon}</span>
+          </div>
+          <div>
+            <CardTitle className="text-lg">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-2">
+        {settings.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-muted-foreground text-sm">No settings configured in this category.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-muted">
+            {settings.map((setting) => (
+              <SettingRow key={setting.id} setting={setting} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 
   if (loading) {
     return (
-      <div className="flex justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center py-16">
+        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Loading configuration...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Settings className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">API Configuration</h2>
+            <p className="text-muted-foreground text-sm">Manage payment gateways, email services, and other integrations</p>
+          </div>
+        </div>
+        <Badge variant="outline" className="text-sm">
+          {settings.length} {settings.length === 1 ? 'setting' : 'settings'}
+        </Badge>
+      </div>
+
       {/* Security Notice */}
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Security Notice</AlertTitle>
-        <AlertDescription>
-          For sensitive API keys (Stripe Secret Key, etc.), we recommend using secure environment 
-          secrets instead of storing them here. Contact support for guidance on secure secret management.
+      <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50">
+        <Shield className="h-4 w-4 text-amber-600" />
+        <AlertTitle className="text-amber-800 dark:text-amber-200">Security Best Practice</AlertTitle>
+        <AlertDescription className="text-amber-700 dark:text-amber-300">
+          For highly sensitive API keys (like Stripe Secret Key), consider using secure environment 
+          secrets instead of database storage. Contact support for guidance on production secret management.
         </AlertDescription>
       </Alert>
 
       {/* Payment Configuration */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-primary" />
-            <CardTitle>Payment Configuration</CardTitle>
-          </div>
-          <CardDescription>
-            Configure payment gateway settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {paymentSettings.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No payment settings configured.</p>
-          ) : (
-            paymentSettings.map((setting) => (
-              <SettingRow key={setting.id} setting={setting} />
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <SettingsSection
+        title="Payment Configuration"
+        description="Configure payment gateway credentials"
+        icon={<CreditCard className="w-5 h-5" />}
+        settings={paymentSettings}
+        iconBg="bg-primary/10"
+        iconColor="text-primary"
+      />
 
       {/* Email Configuration */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Mail className="w-5 h-5 text-primary" />
-            <CardTitle>Email Configuration</CardTitle>
-          </div>
-          <CardDescription>
-            Configure email notification settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {emailSettings.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No email settings configured.</p>
-          ) : (
-            emailSettings.map((setting) => (
-              <SettingRow key={setting.id} setting={setting} />
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <SettingsSection
+        title="Email Configuration"
+        description="Configure email service and notification settings"
+        icon={<Mail className="w-5 h-5" />}
+        settings={emailSettings}
+        iconBg="bg-secondary/10"
+        iconColor="text-secondary"
+      />
 
       {/* Other Settings */}
       {otherSettings.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Key className="w-5 h-5 text-primary" />
-              <CardTitle>Other Configuration</CardTitle>
-            </div>
-            <CardDescription>
-              Additional configuration settings
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {otherSettings.map((setting) => (
-              <SettingRow key={setting.id} setting={setting} />
-            ))}
-        </CardContent>
-      </Card>
+        <SettingsSection
+          title="Additional Configuration"
+          description="Other integration settings and API keys"
+          icon={<Globe className="w-5 h-5" />}
+          settings={otherSettings}
+          iconBg="bg-muted"
+          iconColor="text-muted-foreground"
+        />
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => setAddDialogOpen(true)} className="gap-2">
+      <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
+        <Button 
+          variant="outline" 
+          onClick={() => setAddDialogOpen(true)} 
+          className="gap-2"
+        >
           <Plus className="w-4 h-4" />
-          Add Setting
+          Add New Setting
         </Button>
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Save All Changes
+        <Button 
+          onClick={handleSave} 
+          disabled={saving} 
+          className="gap-2 min-w-[160px] shadow-md"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              Save All Changes
+            </>
+          )}
         </Button>
       </div>
 
       {/* Add Setting Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Add New Setting</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-primary" />
+              Add New Setting
+            </DialogTitle>
             <DialogDescription>
-              Add a new configuration setting
+              Add a new configuration setting to the system
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="key">Setting Key</Label>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="key">Setting Key *</Label>
               <Input
                 id="key"
                 value={newSetting.setting_key}
                 onChange={(e) => setNewSetting({ ...newSetting, setting_key: e.target.value })}
-                placeholder="e.g., api_key_name"
+                placeholder="e.g., stripe_api_key"
+                className="bg-muted/50 border-0"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="value">Value</Label>
               <Input
                 id="value"
@@ -360,15 +467,16 @@ export const APIConfiguration = () => {
                 value={newSetting.setting_value}
                 onChange={(e) => setNewSetting({ ...newSetting, setting_value: e.target.value })}
                 placeholder="Enter value..."
+                className="bg-muted/50 border-0"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
               <Select
                 value={newSetting.setting_type}
                 onValueChange={(value) => setNewSetting({ ...newSetting, setting_type: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-muted/50 border-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -378,27 +486,35 @@ export const APIConfiguration = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 value={newSetting.description}
                 onChange={(e) => setNewSetting({ ...newSetting, description: e.target.value })}
                 placeholder="What is this setting for?"
+                className="bg-muted/50 border-0"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
               <Switch
                 checked={newSetting.is_secret}
                 onCheckedChange={(checked) => setNewSetting({ ...newSetting, is_secret: checked })}
               />
-              <Label>This is a secret value</Label>
+              <div>
+                <Label className="cursor-pointer">This is a secret value</Label>
+                <p className="text-xs text-muted-foreground">Secret values will be masked by default</p>
+              </div>
             </div>
-            <div className="flex justify-end gap-2 pt-4">
+            <Separator />
+            <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddSetting}>Add Setting</Button>
+              <Button onClick={handleAddSetting} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Add Setting
+              </Button>
             </div>
           </div>
         </DialogContent>

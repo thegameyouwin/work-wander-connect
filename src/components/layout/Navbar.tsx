@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, User, Briefcase, LayoutDashboard, LogOut } from "lucide-react";
+import { Menu, X, User, Briefcase, LayoutDashboard, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
@@ -16,7 +16,7 @@ const navLinks = [
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, signOut, loading } = useAuth();
+  const { user, profile, isAdmin, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -50,6 +50,14 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-3">
             {!loading && user ? (
               <>
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary hover:bg-primary/10">
+                      <Shield className="w-4 h-4" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm" className="gap-2">
                     <LayoutDashboard className="w-4 h-4" />
@@ -118,6 +126,14 @@ export const Navbar = () => {
               <div className="pt-4 border-t border-border space-y-3">
                 {!loading && user ? (
                   <>
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full gap-2 text-primary border-primary hover:bg-primary hover:text-primary-foreground">
+                          <Shield className="w-4 h-4" />
+                          Admin Dashboard
+                        </Button>
+                      </Link>
+                    )}
                     <Link to="/dashboard" onClick={() => setIsOpen(false)}>
                       <Button variant="outline" className="w-full gap-2">
                         <LayoutDashboard className="w-4 h-4" />
