@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { MapPin, DollarSign, Clock, BadgeCheck, ArrowRight, Building2, Search, Filter, Heart, Briefcase, ChevronDown, Loader2 } from "lucide-react";
+import { MapPin, DollarSign, Clock, BadgeCheck, ArrowRight, Building2, Search, Loader2, ChevronLeft, ChevronRight, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface Job {
   id: string;
@@ -30,53 +30,105 @@ interface Job {
   benefits: string[] | null;
 }
 
-const categories = ["All", "Healthcare", "IT & Tech", "Construction", "Hospitality", "Skilled Trades"];
+const ITEMS_PER_PAGE = 20;
 
 const Jobs = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "All");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [coverLetter, setCoverLetter] = useState("");
   const [applying, setApplying] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Fetch unique categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("jobs")
+        .select("category");
+      
+      if (data) {
+        const uniqueCategories = [...new Set(data.map(j => j.category).filter(Boolean))] as string[];
+        setCategories(uniqueCategories.sort());
+      }
+    };
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [currentPage, selectedCategory]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchTerm]);
 
   const fetchJobs = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    
+    // Build query
+    let query = supabase
       .from("jobs")
-      .select("*")
+      .select("*", { count: "exact" });
+
+    // Apply category filter
+    if (selectedCategory !== "All") {
+      query = query.eq("category", selectedCategory);
+    }
+
+    // Order and paginate
+    query = query
       .order("is_featured", { ascending: false })
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
+
+    const { data, error, count } = await query;
 
     if (error) {
       console.error("Error fetching jobs:", error);
     } else {
       setJobs(data || []);
+      setTotalJobs(count || 0);
     }
     setLoading(false);
   };
 
+  // Client-side search filter
   const filteredJobs = jobs.filter((job) => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || job.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesSearch = searchTerm === "" || 
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.location.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
+
+  const totalPages = Math.ceil(totalJobs / ITEMS_PER_PAGE);
 
   const formatSalary = (min: number | null, max: number | null) => {
     if (!min && !max) return "Competitive";
     if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
     if (min) return `From $${min.toLocaleString()}`;
     return `Up to $${max?.toLocaleString()}`;
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    if (value === "All") {
+      searchParams.delete("category");
+    } else {
+      searchParams.set("category", value);
+    }
+    setSearchParams(searchParams);
   };
 
   const handleApply = async () => {
@@ -145,7 +197,7 @@ const Jobs = () => {
               Find Visa-Sponsored Jobs
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Browse {jobs.length}+ verified positions from employers ready to sponsor your work visa.
+              Browse {totalJobs.toLocaleString()}+ verified positions from employers ready to sponsor your work visa.
             </p>
           </motion.div>
 
@@ -160,17 +212,18 @@ const Jobs = () => {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
-                  placeholder="Search job titles or companies..."
+                  placeholder="Search job titles, companies, or locations..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 h-12"
                 />
               </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full md:w-48 h-12">
+              <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+                <SelectTrigger className="w-full md:w-56 h-12">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="All">All Categories</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
@@ -187,7 +240,11 @@ const Jobs = () => {
           {/* Results Count */}
           <div className="mb-6 flex items-center justify-between">
             <p className="text-muted-foreground">
-              Showing <span className="text-foreground font-medium">{filteredJobs.length}</span> jobs
+              Showing <span className="text-foreground font-medium">{filteredJobs.length}</span> of{" "}
+              <span className="text-foreground font-medium">{totalJobs.toLocaleString()}</span> jobs
+              {selectedCategory !== "All" && (
+                <span> in <Badge variant="secondary">{selectedCategory}</Badge></span>
+              )}
             </p>
           </div>
 
@@ -204,7 +261,7 @@ const Jobs = () => {
                     key={job.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05, duration: 0.4 }}
+                    transition={{ delay: index * 0.03, duration: 0.4 }}
                     className="group bg-card rounded-xl border border-border p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300"
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center gap-6">
@@ -284,6 +341,70 @@ const Jobs = () => {
                   </p>
                 </div>
               )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-12">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="icon"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-10 h-10"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                    
+                    {totalPages > 5 && currentPage < totalPages - 2 && (
+                      <>
+                        <span className="px-2 text-muted-foreground">...</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="w-10 h-10"
+                        >
+                          {totalPages}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -308,6 +429,17 @@ const Jobs = () => {
                     <li key={i}>{req}</li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {selectedJob?.benefits && selectedJob.benefits.length > 0 && (
+              <div>
+                <h4 className="font-medium text-foreground mb-2">Benefits</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedJob.benefits.map((benefit, i) => (
+                    <Badge key={i} variant="secondary">{benefit}</Badge>
+                  ))}
+                </div>
               </div>
             )}
 
