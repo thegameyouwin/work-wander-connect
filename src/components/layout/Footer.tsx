@@ -1,31 +1,32 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Facebook, Linkedin, Instagram, Twitter } from "lucide-react";
+ import { Mail, Phone, MapPin, Facebook, Linkedin, Instagram, Twitter, Globe } from "lucide-react";
+ import { useTranslation } from "react-i18next";
 import logo from "@/assets/logo.png";
 
 const footerLinks = {
   services: [
-    { name: "Job Placements", href: "/jobs" },
-    { name: "Visa Processing", href: "#" },
-    { name: "Document Support", href: "#" },
-    { name: "Travel Assistance", href: "#" },
+     { key: "jobPlacements", href: "/jobs" },
+     { key: "visaProcessing", href: "/resources" },
+     { key: "documentSupport", href: "/resources" },
+     { key: "travelAssistance", href: "/resources" },
   ],
   company: [
-    { name: "About Us", href: "#about" },
-    { name: "Success Stories", href: "#testimonials" },
-    { name: "Blog", href: "#" },
-    { name: "Careers", href: "#" },
+     { key: "aboutUs", href: "/about" },
+     { key: "successStories", href: "/success-stories" },
+     { key: "blog", href: "/blog" },
+     { key: "careers", href: "/jobs" },
   ],
   support: [
-    { name: "Help Center", href: "#" },
-    { name: "Contact Us", href: "#contact" },
-    { name: "FAQ", href: "#" },
-    { name: "Live Chat", href: "#" },
+     { key: "helpCenter", href: "/faq" },
+     { key: "contactUs", href: "/contact" },
+     { key: "faq", href: "/faq" },
+     { key: "liveChat", href: "/contact" },
   ],
   legal: [
-    { name: "Privacy Policy", href: "#" },
-    { name: "Terms of Service", href: "#" },
-    { name: "Cookie Policy", href: "#" },
-    { name: "GDPR Compliance", href: "#" },
+     { key: "privacyPolicy", href: "/privacy" },
+     { key: "termsOfService", href: "/terms" },
+     { key: "cookiePolicy", href: "/privacy" },
+     { key: "gdprCompliance", href: "/privacy" },
   ],
 };
 
@@ -37,6 +38,8 @@ const socialLinks = [
 ];
 
 export const Footer = () => {
+   const { t } = useTranslation();
+ 
   return (
     <footer className="bg-foreground text-background">
       {/* Main Footer */}
@@ -48,7 +51,7 @@ export const Footer = () => {
               <img src={logo} alt="Carewell Supports" className="h-12 w-auto brightness-0 invert" />
             </Link>
             <p className="text-sm opacity-80 mb-6 max-w-xs">
-              Your trusted partner for legal immigration pathways and job placements worldwide.
+               {t("footer.tagline")}
             </p>
             <div className="space-y-3">
               <a href="mailto:hr@carewellsupports.com" className="flex items-center gap-3 text-sm opacity-80 hover:opacity-100 transition-opacity">
@@ -68,12 +71,12 @@ export const Footer = () => {
 
           {/* Links Columns */}
           <div>
-            <h4 className="font-heading font-semibold mb-4">Services</h4>
+             <h4 className="font-heading font-semibold mb-4">{t("footer.services")}</h4>
             <ul className="space-y-3">
               {footerLinks.services.map((link) => (
-                <li key={link.name}>
+                 <li key={link.key}>
                   <Link to={link.href} className="text-sm opacity-70 hover:opacity-100 transition-opacity">
-                    {link.name}
+                     {t(`footer.${link.key}`)}
                   </Link>
                 </li>
               ))}
@@ -81,12 +84,12 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-heading font-semibold mb-4">Company</h4>
+             <h4 className="font-heading font-semibold mb-4">{t("footer.company")}</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
-                <li key={link.name}>
+                 <li key={link.key}>
                   <Link to={link.href} className="text-sm opacity-70 hover:opacity-100 transition-opacity">
-                    {link.name}
+                     {t(`footer.${link.key}`)}
                   </Link>
                 </li>
               ))}
@@ -94,12 +97,12 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-heading font-semibold mb-4">Support</h4>
+             <h4 className="font-heading font-semibold mb-4">{t("footer.support")}</h4>
             <ul className="space-y-3">
               {footerLinks.support.map((link) => (
-                <li key={link.name}>
+                 <li key={link.key}>
                   <Link to={link.href} className="text-sm opacity-70 hover:opacity-100 transition-opacity">
-                    {link.name}
+                     {t(`footer.${link.key}`)}
                   </Link>
                 </li>
               ))}
@@ -107,12 +110,12 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-heading font-semibold mb-4">Legal</h4>
+             <h4 className="font-heading font-semibold mb-4">{t("footer.legal")}</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
-                <li key={link.name}>
+                 <li key={link.key}>
                   <Link to={link.href} className="text-sm opacity-70 hover:opacity-100 transition-opacity">
-                    {link.name}
+                     {t(`footer.${link.key}`)}
                   </Link>
                 </li>
               ))}
@@ -125,7 +128,7 @@ export const Footer = () => {
       <div className="border-t border-background/10">
         <div className="container-wide py-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm opacity-70">
-            © {new Date().getFullYear()} Carewell Supports. All rights reserved.
+             © {new Date().getFullYear()} Carewell Supports. {t("footer.allRightsReserved")}
           </p>
           <div className="flex items-center gap-4">
             {socialLinks.map((social) => (
