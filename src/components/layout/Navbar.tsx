@@ -1,23 +1,26 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, User, Briefcase, LayoutDashboard, LogOut, Shield } from "lucide-react";
+ import { Menu, X, User, Briefcase, LayoutDashboard, LogOut, Shield, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+ import { useTranslation } from "react-i18next";
+ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import logo from "@/assets/logo.png";
 
 const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "Jobs", href: "/jobs" },
-  { name: "How It Works", href: "/#how-it-works" },
-  { name: "About", href: "/#about" },
-  { name: "Contact", href: "/#contact" },
+   { key: "home", href: "/" },
+   { key: "jobs", href: "/jobs" },
+   { key: "about", href: "/about" },
+   { key: "pricing", href: "/pricing" },
+   { key: "contact", href: "/contact" },
 ];
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, profile, isAdmin, signOut, loading } = useAuth();
   const navigate = useNavigate();
+   const { t } = useTranslation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -37,36 +40,37 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
-                key={link.name}
+                 key={link.key}
                 to={link.href}
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200"
               >
-                {link.name}
+                 {t(`nav.${link.key}`)}
               </Link>
             ))}
           </div>
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
+             <LanguageSwitcher />
             {!loading && user ? (
               <>
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary hover:bg-primary/10">
                       <Shield className="w-4 h-4" />
-                      Admin
+                       {t("nav.admin")}
                     </Button>
                   </Link>
                 )}
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm" className="gap-2">
                     <LayoutDashboard className="w-4 h-4" />
-                    Dashboard
+                       {t("nav.dashboard")}
                   </Button>
                 </Link>
                 <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2">
                   <LogOut className="w-4 h-4" />
-                  Sign Out
+                   {t("nav.signOut")}
                 </Button>
               </>
             ) : (
@@ -74,13 +78,13 @@ export const Navbar = () => {
                 <Link to="/auth">
                   <Button variant="ghost" size="sm" className="gap-2">
                     <User className="w-4 h-4" />
-                    Login
+                       {t("nav.login")}
                   </Button>
                 </Link>
                 <Link to="/auth">
                   <Button size="sm" className="gap-2">
                     <Briefcase className="w-4 h-4" />
-                    Start Application
+                       {t("nav.startApplication")}
                   </Button>
                 </Link>
               </>
@@ -115,14 +119,17 @@ export const Navbar = () => {
             <div className="container-wide py-4 space-y-4">
               {navLinks.map((link) => (
                 <Link
-                  key={link.name}
+                   key={link.key}
                   to={link.href}
                   onClick={() => setIsOpen(false)}
                   className="block py-2 text-foreground font-medium hover:text-primary transition-colors"
                 >
-                  {link.name}
+                   {t(`nav.${link.key}`)}
                 </Link>
               ))}
+               <div className="py-2">
+                 <LanguageSwitcher />
+               </div>
               <div className="pt-4 border-t border-border space-y-3">
                 {!loading && user ? (
                   <>
