@@ -8,12 +8,14 @@
  import { Input } from "@/components/ui/input";
  import { Textarea } from "@/components/ui/textarea";
  import { useToast } from "@/hooks/use-toast";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  
  const Contact = () => {
    const { t } = useTranslation();
    const { toast } = useToast();
    const [sending, setSending] = useState(false);
- 
+   usePageSEO({ title: "Contact Us", description: "Get in touch with Carewell Supports. Offices in New York, London, and Toronto.", canonical: "/contact" });
+
    const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
      setSending(true);

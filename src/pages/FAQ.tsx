@@ -5,6 +5,7 @@
  import { Navbar } from "@/components/layout/Navbar";
  import { Footer } from "@/components/layout/Footer";
  import { Input } from "@/components/ui/input";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  import {
    Accordion,
    AccordionContent,
@@ -59,6 +60,7 @@
    const { t } = useTranslation();
    const [search, setSearch] = useState("");
    const [activeCategory, setActiveCategory] = useState("all");
+   usePageSEO({ title: "Frequently Asked Questions", description: "Find answers about visa sponsorship, job placement, pricing, and immigration with Carewell Supports.", canonical: "/faq" });
  
    const categories = [
      { id: "all", label: "All", icon: HelpCircle },

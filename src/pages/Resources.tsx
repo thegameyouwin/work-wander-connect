@@ -5,6 +5,7 @@
  import { Footer } from "@/components/layout/Footer";
  import { Button } from "@/components/ui/button";
  import { Badge } from "@/components/ui/badge";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  
  const guides = [
    { icon: BookOpen, title: "Complete Immigration Guide 2026", desc: "Step-by-step walkthrough of the entire immigration process", format: "PDF", pages: "45 pages" },
@@ -28,6 +29,7 @@
  
  const Resources = () => {
    const { t } = useTranslation();
+   usePageSEO({ title: "Resources", description: "Download free immigration guides, document templates, and preparation tools.", canonical: "/resources" });
  
    return (
      <div className="min-h-screen bg-background">

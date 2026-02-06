@@ -137,19 +137,19 @@ export const Navbar = () => {
                       <Link to="/admin" onClick={() => setIsOpen(false)}>
                         <Button variant="outline" className="w-full gap-2 text-primary border-primary hover:bg-primary hover:text-primary-foreground">
                           <Shield className="w-4 h-4" />
-                          Admin Dashboard
+                          {t("nav.admin")}
                         </Button>
                       </Link>
                     )}
                     <Link to="/dashboard" onClick={() => setIsOpen(false)}>
                       <Button variant="outline" className="w-full gap-2">
                         <LayoutDashboard className="w-4 h-4" />
-                        Dashboard
+                        {t("nav.dashboard")}
                       </Button>
                     </Link>
                     <Button onClick={handleSignOut} className="w-full gap-2">
                       <LogOut className="w-4 h-4" />
-                      Sign Out
+                      {t("nav.signOut")}
                     </Button>
                   </>
                 ) : (
@@ -157,13 +157,13 @@ export const Navbar = () => {
                     <Link to="/auth" onClick={() => setIsOpen(false)}>
                       <Button variant="outline" className="w-full gap-2">
                         <User className="w-4 h-4" />
-                        Login
+                        {t("nav.login")}
                       </Button>
                     </Link>
                     <Link to="/auth" onClick={() => setIsOpen(false)}>
                       <Button className="w-full gap-2">
                         <Briefcase className="w-4 h-4" />
-                        Start Application
+                        {t("nav.startApplication")}
                       </Button>
                     </Link>
                   </>

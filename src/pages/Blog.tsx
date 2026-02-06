@@ -7,6 +7,7 @@
  import { Footer } from "@/components/layout/Footer";
  import { Button } from "@/components/ui/button";
  import { Badge } from "@/components/ui/badge";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  
  const posts = [
    {
@@ -77,6 +78,7 @@
  const Blog = () => {
    const { t } = useTranslation();
    const [activeCategory, setActiveCategory] = useState("All");
+   usePageSEO({ title: "Blog", description: "Immigration insights, visa guides, and career tips for professionals seeking work abroad.", canonical: "/blog" });
  
    const filteredPosts = activeCategory === "All" 
      ? posts 
