@@ -2,9 +2,11 @@
  import { useTranslation } from "react-i18next";
  import { Navbar } from "@/components/layout/Navbar";
  import { Footer } from "@/components/layout/Footer";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  
  const Privacy = () => {
    const { t } = useTranslation();
+   usePageSEO({ title: "Privacy Policy", description: "Learn how Carewell Supports protects your personal data and privacy.", canonical: "/privacy" });
  
    const sections = [
      {

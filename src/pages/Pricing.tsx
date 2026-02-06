@@ -6,6 +6,7 @@
  import { Footer } from "@/components/layout/Footer";
  import { Button } from "@/components/ui/button";
  import { Badge } from "@/components/ui/badge";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  
  const plans = [
    {
@@ -69,6 +70,7 @@
  
  const Pricing = () => {
    const { t } = useTranslation();
+   usePageSEO({ title: "Pricing Plans", description: "Transparent pricing starting from $2,800. Choose Milestone, Full Upfront, or Deferred payment plans.", canonical: "/pricing" });
  
    return (
      <div className="min-h-screen bg-background">

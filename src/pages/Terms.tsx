@@ -2,9 +2,11 @@
  import { useTranslation } from "react-i18next";
  import { Navbar } from "@/components/layout/Navbar";
  import { Footer } from "@/components/layout/Footer";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  
  const Terms = () => {
    const { t } = useTranslation();
+   usePageSEO({ title: "Terms of Service", description: "Read our terms of service for Carewell Supports immigration services.", canonical: "/terms" });
  
    const sections = [
      {

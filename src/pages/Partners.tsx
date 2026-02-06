@@ -5,6 +5,7 @@
  import { Navbar } from "@/components/layout/Navbar";
  import { Footer } from "@/components/layout/Footer";
  import { Button } from "@/components/ui/button";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  
  const partnerTypes = [
    {
@@ -36,6 +37,7 @@
  
  const Partners = () => {
    const { t } = useTranslation();
+   usePageSEO({ title: "Partners", description: "Partner with Carewell Supports as an employer, recruitment agency, or training provider.", canonical: "/partners" });
  
    return (
      <div className="min-h-screen bg-background">

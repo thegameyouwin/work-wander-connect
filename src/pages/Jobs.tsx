@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 interface Job {
   id: string;
@@ -33,6 +34,7 @@ interface Job {
 const ITEMS_PER_PAGE = 20;
 
 const Jobs = () => {
+  usePageSEO({ title: "Visa-Sponsored Jobs", description: "Browse verified visa-sponsored jobs in the USA, Canada, and UK across healthcare, tech, construction, and more.", canonical: "/jobs" });
   const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [totalJobs, setTotalJobs] = useState(0);

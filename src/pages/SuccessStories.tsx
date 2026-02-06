@@ -7,6 +7,7 @@
  import { Button } from "@/components/ui/button";
  import { Badge } from "@/components/ui/badge";
  import { supabase } from "@/integrations/supabase/client";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  
  interface Story {
    id: string;
@@ -22,6 +23,7 @@
  const SuccessStories = () => {
    const { t } = useTranslation();
    const [stories, setStories] = useState<Story[]>([]);
+   usePageSEO({ title: "Success Stories", description: "Read real stories from professionals who found visa-sponsored jobs through Carewell Supports.", canonical: "/success-stories" });
    const [loading, setLoading] = useState(true);
  
    useEffect(() => {

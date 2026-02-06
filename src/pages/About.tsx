@@ -3,10 +3,12 @@
  import { Target, Eye, Heart, Lightbulb, Shield, Award, Users, Globe2 } from "lucide-react";
  import { Navbar } from "@/components/layout/Navbar";
  import { Footer } from "@/components/layout/Footer";
+ import { usePageSEO } from "@/hooks/usePageSEO";
  import successStoriesImg from "@/assets/success-stories.jpg";
  
  const About = () => {
    const { t } = useTranslation();
+   usePageSEO({ title: "About Us", description: "Learn about Carewell Supports — our mission, values, and commitment to ethical immigration services since 2018.", canonical: "/about" });
  
    const values = [
      { icon: Shield, title: t("about.integrity"), desc: t("about.integrityDesc") },
