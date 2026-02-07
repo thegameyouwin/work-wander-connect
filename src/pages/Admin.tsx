@@ -20,6 +20,7 @@ import { ApplicationsManagement } from "@/components/admin/ApplicationsManagemen
 import { DocumentsManagement } from "@/components/admin/DocumentsManagement";
 import { JobsManagement } from "@/components/admin/JobsManagement";
 import { APIConfiguration } from "@/components/admin/APIConfiguration";
+import { PaymentMethodsConfig } from "@/components/admin/PaymentMethodsConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -130,7 +131,7 @@ const Admin = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="pt-24 pb-16">
+      <main className="pt-28 pb-16">
         <div className="container-wide">
           {/* Header */}
           <motion.div 
@@ -226,6 +227,13 @@ const Admin = () => {
                   <span>Jobs</span>
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="payments" 
+                  className="gap-2 px-4 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Payment Methods</span>
+                </TabsTrigger>
+                <TabsTrigger 
                   value="settings" 
                   className="gap-2 px-4 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
@@ -244,6 +252,10 @@ const Admin = () => {
 
               <TabsContent value="jobs" className="space-y-4 mt-6">
                 <JobsManagement />
+              </TabsContent>
+
+              <TabsContent value="payments" className="space-y-4 mt-6">
+                <PaymentMethodsConfig />
               </TabsContent>
 
               <TabsContent value="settings" className="space-y-4 mt-6">

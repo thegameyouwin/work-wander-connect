@@ -219,7 +219,7 @@ const Apply = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="pt-24 pb-16">
+      <main className="pt-28 pb-16">
         <div className="container-wide max-w-4xl">
           {/* Header */}
           <motion.div
