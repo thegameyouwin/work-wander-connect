@@ -114,7 +114,7 @@ const Auth = () => {
         
         <div className="relative z-10 flex flex-col justify-center px-16 text-primary-foreground">
           <Link to="/" className="flex items-center gap-3 mb-12">
-            <img src={logo} alt="Carewell Supports" className="h-14 w-auto brightness-0 invert" />
+            <img src={logo} alt="Carewell Supports" className="h-20 w-auto brightness-0 invert" />
           </Link>
 
           <h1 className="font-heading text-4xl font-bold mb-6">
@@ -147,7 +147,7 @@ const Auth = () => {
         >
           {/* Mobile Logo */}
           <Link to="/" className="flex lg:hidden items-center gap-3 mb-8 justify-center">
-            <img src={logo} alt="Carewell Supports" className="h-12 w-auto" />
+            <img src={logo} alt="Carewell Supports" className="h-16 w-auto" />
           </Link>
 
           <div className="text-center mb-8">

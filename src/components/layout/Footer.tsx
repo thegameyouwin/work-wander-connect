@@ -48,7 +48,7 @@ export const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6">
-              <img src={logo} alt="Carewell Supports" className="h-12 w-auto brightness-0 invert" />
+              <img src={logo} alt="Carewell Supports" className="h-16 w-auto brightness-0 invert" />
             </Link>
             <p className="text-sm opacity-80 mb-6 max-w-xs">
                {t("footer.tagline")}
