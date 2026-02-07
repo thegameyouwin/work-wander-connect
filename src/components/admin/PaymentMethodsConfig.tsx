@@ -18,6 +18,12 @@ import {
   DollarSign,
   CheckCircle2,
   Info,
+  Send,
+  Landmark,
+  Banknote,
+  ArrowLeftRight,
+  QrCode,
+  ShieldCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -25,6 +31,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface PaymentMethod {
   id: string;
   name: string;
+  region: string;
   description: string;
   icon: React.ElementType;
   settingKey: string;
@@ -32,10 +39,12 @@ interface PaymentMethod {
 }
 
 const PAYMENT_METHODS: PaymentMethod[] = [
+  // ── Global / Card-based ──
   {
     id: "stripe",
     name: "Stripe",
-    description: "Accept credit/debit cards worldwide with Stripe",
+    region: "Global",
+    description: "Accept credit/debit cards, Apple Pay & Google Pay worldwide",
     icon: CreditCard,
     settingKey: "payment_stripe_enabled",
     fields: [
@@ -46,7 +55,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
   {
     id: "paypal",
     name: "PayPal",
-    description: "Allow PayPal payments and PayPal Credit",
+    region: "Global",
+    description: "PayPal payments, Venmo (US) and PayPal Credit",
     icon: Wallet,
     settingKey: "payment_paypal_enabled",
     fields: [
@@ -54,36 +64,138 @@ const PAYMENT_METHODS: PaymentMethod[] = [
       { key: "paypal_client_secret", label: "Client Secret", placeholder: "EL...", isSecret: true },
     ],
   },
+
+  // ── USA-specific ──
+  {
+    id: "zelle",
+    name: "Zelle",
+    region: "USA",
+    description: "Instant bank-to-bank transfers popular in the United States",
+    icon: ArrowLeftRight,
+    settingKey: "payment_zelle_enabled",
+    fields: [
+      { key: "zelle_email", label: "Registered Email", placeholder: "payments@company.com", isSecret: false },
+      { key: "zelle_phone", label: "Registered Phone", placeholder: "+1 (555) 123-4567", isSecret: false },
+      { key: "zelle_business_name", label: "Business Name", placeholder: "Carewell Supports LLC", isSecret: false },
+    ],
+  },
+  {
+    id: "cashapp",
+    name: "Cash App",
+    region: "USA / UK",
+    description: "Cash App payments — popular in USA and UK markets",
+    icon: DollarSign,
+    settingKey: "payment_cashapp_enabled",
+    fields: [
+      { key: "cashapp_cashtag", label: "$Cashtag", placeholder: "$CarewellSupports", isSecret: false },
+      { key: "cashapp_business_id", label: "Business ID", placeholder: "Business verification ID", isSecret: false },
+    ],
+  },
+
+  // ── Canada-specific ──
+  {
+    id: "interac",
+    name: "Interac e-Transfer",
+    region: "Canada",
+    description: "Canada's most popular digital payment method",
+    icon: Send,
+    settingKey: "payment_interac_enabled",
+    fields: [
+      { key: "interac_email", label: "Receiving Email", placeholder: "payments@company.com", isSecret: false },
+      { key: "interac_autodeposit", label: "Auto-deposit Enabled", placeholder: "yes / no", isSecret: false },
+      { key: "interac_security_question", label: "Security Question (if no auto-deposit)", placeholder: "Optional security question", isSecret: false },
+    ],
+  },
+
+  // ── UK-specific ──
+  {
+    id: "bacs",
+    name: "BACS / Faster Payments",
+    region: "UK",
+    description: "UK bank transfers via BACS or Faster Payments Service",
+    icon: Landmark,
+    settingKey: "payment_bacs_enabled",
+    fields: [
+      { key: "bacs_account_name", label: "Account Name", placeholder: "Carewell Supports Ltd", isSecret: false },
+      { key: "bacs_sort_code", label: "Sort Code", placeholder: "12-34-56", isSecret: true },
+      { key: "bacs_account_number", label: "Account Number", placeholder: "12345678", isSecret: true },
+      { key: "bacs_reference", label: "Payment Reference", placeholder: "e.g. CWS-APP", isSecret: false },
+    ],
+  },
+  {
+    id: "gocardless",
+    name: "GoCardless",
+    region: "UK / Europe",
+    description: "Direct debit payments — ideal for recurring milestone payments",
+    icon: ShieldCheck,
+    settingKey: "payment_gocardless_enabled",
+    fields: [
+      { key: "gocardless_access_token", label: "Access Token", placeholder: "live_...", isSecret: true },
+      { key: "gocardless_webhook_secret", label: "Webhook Secret", placeholder: "Webhook signing secret", isSecret: true },
+    ],
+  },
+
+  // ── Bank / Wire Transfer (international) ──
   {
     id: "bank_transfer",
-    name: "Bank Transfer",
-    description: "Direct bank/wire transfer payments",
+    name: "International Wire Transfer",
+    region: "Global",
+    description: "Direct bank/wire transfer for international payments",
     icon: Building2,
     settingKey: "payment_bank_transfer_enabled",
     fields: [
       { key: "bank_name", label: "Bank Name", placeholder: "e.g. Chase Bank", isSecret: false },
       { key: "bank_account_number", label: "Account Number", placeholder: "Account number", isSecret: true },
-      { key: "bank_routing_number", label: "Routing Number", placeholder: "Routing number", isSecret: true },
+      { key: "bank_routing_number", label: "Routing / Sort Code", placeholder: "Routing number", isSecret: true },
       { key: "bank_swift_code", label: "SWIFT/BIC Code", placeholder: "e.g. CHASUS33", isSecret: false },
+      { key: "bank_iban", label: "IBAN (if applicable)", placeholder: "e.g. GB29 NWBK 6016 1331 9268 19", isSecret: true },
+    ],
+  },
+
+  // ── Remittance / Immigrant-friendly ──
+  {
+    id: "wise",
+    name: "Wise (TransferWise)",
+    region: "Global",
+    description: "Low-fee international transfers — popular with immigrants",
+    icon: Globe,
+    settingKey: "payment_wise_enabled",
+    fields: [
+      { key: "wise_api_key", label: "API Key", placeholder: "API key", isSecret: true },
+      { key: "wise_profile_id", label: "Profile ID", placeholder: "Business profile ID", isSecret: false },
+      { key: "wise_email", label: "Account Email", placeholder: "payments@company.com", isSecret: false },
     ],
   },
   {
-    id: "mobile_money",
-    name: "Mobile Money",
-    description: "M-Pesa, MTN Mobile Money, and other mobile payments",
-    icon: Smartphone,
-    settingKey: "payment_mobile_money_enabled",
+    id: "remitly",
+    name: "Remitly",
+    region: "Global",
+    description: "Trusted remittance service for sending money internationally",
+    icon: Send,
+    settingKey: "payment_remitly_enabled",
     fields: [
-      { key: "mobile_money_provider", label: "Provider", placeholder: "e.g. M-Pesa, MTN", isSecret: false },
-      { key: "mobile_money_number", label: "Business Number", placeholder: "e.g. 254...", isSecret: false },
-      { key: "mobile_money_api_key", label: "API Key", placeholder: "API key", isSecret: true },
+      { key: "remitly_partner_id", label: "Partner ID", placeholder: "Partner ID", isSecret: false },
+      { key: "remitly_api_key", label: "API Key", placeholder: "API key", isSecret: true },
+    ],
+  },
+  {
+    id: "worldremit",
+    name: "WorldRemit",
+    region: "Global",
+    description: "Send money from 50+ countries — popular in Africa & Asia",
+    icon: Globe,
+    settingKey: "payment_worldremit_enabled",
+    fields: [
+      { key: "worldremit_partner_id", label: "Partner ID", placeholder: "Partner ID", isSecret: false },
+      { key: "worldremit_receiver_name", label: "Receiver Name", placeholder: "Full legal name", isSecret: false },
     ],
   },
   {
     id: "western_union",
     name: "Western Union",
-    description: "Accept Western Union money transfers",
-    icon: Globe,
+    region: "Global",
+    description: "Accept Western Union money transfers from 200+ countries",
+    icon: Banknote,
     settingKey: "payment_western_union_enabled",
     fields: [
       { key: "western_union_agent_id", label: "Agent ID", placeholder: "Agent ID", isSecret: false },
@@ -91,14 +203,59 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     ],
   },
   {
+    id: "moneygram",
+    name: "MoneyGram",
+    region: "Global",
+    description: "MoneyGram transfers — available in 200+ countries",
+    icon: Banknote,
+    settingKey: "payment_moneygram_enabled",
+    fields: [
+      { key: "moneygram_agent_id", label: "Agent ID", placeholder: "Agent ID", isSecret: false },
+      { key: "moneygram_receiver_name", label: "Receiver Name", placeholder: "Full legal name", isSecret: false },
+      { key: "moneygram_reference_number", label: "Reference Number", placeholder: "Reference", isSecret: false },
+    ],
+  },
+
+  // ── Mobile Money (Africa/Asia) ──
+  {
+    id: "mobile_money",
+    name: "Mobile Money",
+    region: "Africa",
+    description: "M-Pesa, MTN MoMo, Airtel Money and other mobile wallets",
+    icon: Smartphone,
+    settingKey: "payment_mobile_money_enabled",
+    fields: [
+      { key: "mobile_money_provider", label: "Provider", placeholder: "e.g. M-Pesa, MTN MoMo, Airtel", isSecret: false },
+      { key: "mobile_money_number", label: "Business Number", placeholder: "e.g. 254...", isSecret: false },
+      { key: "mobile_money_api_key", label: "API Key", placeholder: "API key", isSecret: true },
+    ],
+  },
+  {
+    id: "flutterwave",
+    name: "Flutterwave",
+    region: "Africa",
+    description: "Accept payments from Africa — cards, mobile money, bank transfer",
+    icon: QrCode,
+    settingKey: "payment_flutterwave_enabled",
+    fields: [
+      { key: "flutterwave_public_key", label: "Public Key", placeholder: "FLWPUBK_...", isSecret: false },
+      { key: "flutterwave_secret_key", label: "Secret Key", placeholder: "FLWSECK_...", isSecret: true },
+      { key: "flutterwave_encryption_key", label: "Encryption Key", placeholder: "Encryption key", isSecret: true },
+    ],
+  },
+
+  // ── In-person ──
+  {
     id: "cash_payment",
-    name: "Cash Payment",
-    description: "In-person cash payments at office locations",
+    name: "Cash / In-Person Payment",
+    region: "Local",
+    description: "In-person cash or card payments at office locations",
     icon: DollarSign,
     settingKey: "payment_cash_enabled",
     fields: [
       { key: "cash_office_address", label: "Office Address", placeholder: "Payment office address", isSecret: false },
       { key: "cash_office_hours", label: "Office Hours", placeholder: "e.g. Mon-Fri 9am-5pm", isSecret: false },
+      { key: "cash_office_phone", label: "Office Phone", placeholder: "+1 (555) 000-0000", isSecret: false },
     ],
   },
 ];
@@ -292,6 +449,9 @@ export const PaymentMethodsConfig = () => {
                       <div>
                         <CardTitle className="text-base flex items-center gap-2">
                           {method.name}
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">
+                            {method.region}
+                          </Badge>
                           {isEnabled && (
                             <CheckCircle2 className="w-4 h-4 text-primary" />
                           )}
