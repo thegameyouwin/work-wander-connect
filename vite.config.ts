@@ -18,4 +18,21 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Add this for client-side routing support
+  appType: 'spa',
+  // Add this build configuration
+  build: {
+    rollupOptions: {
+      input: {
+        main: './index.html',
+      },
+    },
+    // Generate manifest for better caching
+    manifest: true,
+  },
+  // Add this for development server routing
+  preview: {
+    port: 8080,
+    strictPort: true,
+  },
 }));
