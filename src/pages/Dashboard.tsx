@@ -15,14 +15,16 @@ import {
   CheckCircle2,
   AlertCircle,
   FileUp,
-  Globe,
   Home,
   DollarSign,
   TrendingUp,
   FileCheck,
   Calendar,
   Menu,
-  X
+  X,
+  MessageSquare,
+  Download,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +44,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import logo from "@/assets/logo.png";
 
 interface Application {
   id: string;
@@ -51,6 +54,8 @@ interface Application {
   payment_plan: string;
   created_at: string;
   application_type: string;
+  visa_type?: string;
+  current_step?: string;
 }
 
 interface JobApplication {
@@ -61,6 +66,7 @@ interface JobApplication {
     title: string;
     company: string;
     location: string;
+    salary?: string;
   };
 }
 
@@ -78,6 +84,7 @@ interface DashboardStats {
   totalJobsApplied: number;
   pendingPayments: number;
   upcomingDeadlines: number;
+  totalDocuments: number;
 }
 
 const Dashboard = () => {
@@ -92,6 +99,7 @@ const Dashboard = () => {
     totalJobsApplied: 0,
     pendingPayments: 0,
     upcomingDeadlines: 0,
+    totalDocuments: 0,
   });
   const [dataLoading, setDataLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -131,7 +139,7 @@ const Dashboard = () => {
           id,
           status,
           applied_at,
-          job:jobs(title, company, location)
+          job:jobs(title, company, location, salary)
         `)
         .order("applied_at", { ascending: false })
         .limit(5);
@@ -159,6 +167,7 @@ const Dashboard = () => {
         totalJobsApplied: (jobAppsData || []).length,
         pendingPayments: pendingPaymentsCount,
         upcomingDeadlines: 2,
+        totalDocuments: 3, // This could be fetched from documents table
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -251,24 +260,71 @@ const Dashboard = () => {
     if (diffInDays === 1) return "Yesterday";
     if (diffInDays < 7) return `${diffInDays} days ago`;
     if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const handleMarkNotificationAsRead = async (notificationId: string) => {
+    try {
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId);
+      
+      setNotifications(notifications.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      ));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   if (loading || dataLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center mx-auto mb-4">
-              <Globe className="w-10 h-10 text-white" />
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Loading Header */}
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-lg bg-muted animate-pulse" />
+                <div className="space-y-1">
+                  <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                  <div className="h-3 w-16 bg-muted rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+                <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+              </div>
             </div>
-            <div className="absolute inset-0 animate-ping rounded-2xl bg-primary/20" />
           </div>
-          <div className="space-y-2">
-            <p className="font-semibold text-lg">Carewell Supports</p>
-            <p className="text-muted-foreground">Loading your dashboard...</p>
+        </header>
+
+        <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="space-y-4">
+              <div className="h-8 w-64 bg-muted rounded" />
+              <div className="h-4 w-96 bg-muted rounded" />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-32 bg-muted rounded-lg" />
+              ))}
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="h-96 bg-muted rounded-lg" />
+                <div className="h-64 bg-muted rounded-lg" />
+              </div>
+              <div className="space-y-6">
+                <div className="h-64 bg-muted rounded-lg" />
+                <div className="h-64 bg-muted rounded-lg" />
+              </div>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -278,31 +334,29 @@ const Dashboard = () => {
     ? (primaryApplication.paid_amount / (primaryApplication.total_fee || 1)) * 100
     : 0;
 
+  const totalBalance = primaryApplication 
+    ? primaryApplication.total_fee - primaryApplication.paid_amount 
+    : 0;
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header - Fixed */}
+      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo Section - Updated to match About page style */}
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
-                <Globe className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-heading font-bold text-lg leading-tight text-foreground">
-                  Carewell
-                </span>
-                <span className="text-xs text-muted-foreground -mt-0.5">
-                  Supports
-                </span>
-              </div>
+            {/* Logo - Using the same logo as Navbar */}
+            <Link to="/" className="flex items-center gap-2">
+              <img 
+                src={logo} 
+                alt="Carewell Supports" 
+                className="h-10 w-auto" 
+              />
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-6">
               <nav className="flex items-center gap-6">
-                <Link to="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+                <Link to="/dashboard" className="text-sm font-medium text-primary">
                   Dashboard
                 </Link>
                 <Link to="/apply" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
@@ -321,7 +375,7 @@ const Dashboard = () => {
             </div>
 
             {/* Right side actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {/* Mobile menu button */}
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild className="lg:hidden">
@@ -331,35 +385,53 @@ const Dashboard = () => {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                   <div className="flex flex-col h-full">
-                    <div className="flex items-center gap-3 mb-8">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                        <Globe className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-heading font-bold text-lg">Carewell</span>
-                        <span className="text-xs text-muted-foreground">Supports</span>
-                      </div>
+                    <div className="flex items-center gap-2 mb-8">
+                      <img 
+                        src={logo} 
+                        alt="Carewell Supports" 
+                        className="h-10 w-auto" 
+                      />
                     </div>
                     
                     <nav className="flex-1 space-y-4">
-                      <Link to="/dashboard" className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 text-primary font-medium">
+                      <Link 
+                        to="/dashboard" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 text-primary font-medium"
+                      >
                         <Home className="w-5 h-5" />
                         Dashboard
                       </Link>
-                      <Link to="/apply" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors">
+                      <Link 
+                        to="/apply" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                      >
                         <Plus className="w-5 h-5" />
                         Apply
                       </Link>
-                      <Link to="/jobs" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors">
+                      <Link 
+                        to="/jobs" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                      >
                         <Briefcase className="w-5 h-5" />
                         Jobs
                       </Link>
-                      <Link to="/documents" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors">
+                      <Link 
+                        to="/documents" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                      >
                         <FileText className="w-5 h-5" />
                         Documents
                       </Link>
-                      <Link to="/support" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors">
-                        <AlertCircle className="w-5 h-5" />
+                      <Link 
+                        to="/support" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <MessageSquare className="w-5 h-5" />
                         Support
                       </Link>
                     </nav>
@@ -376,10 +448,41 @@ const Dashboard = () => {
                           <p className="text-sm text-muted-foreground">{profile?.email}</p>
                         </div>
                       </div>
-                      <Button variant="outline" className="w-full" onClick={() => navigate("/profile")}>
-                        <User className="w-4 h-4 mr-2" />
-                        Profile
-                      </Button>
+                      <div className="space-y-2">
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            navigate("/profile");
+                          }}
+                        >
+                          <User className="w-4 h-4 mr-2" />
+                          Profile
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            navigate("/settings");
+                          }}
+                        >
+                          <Settings className="w-4 h-4 mr-2" />
+                          Settings
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            handleSignOut();
+                          }}
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Sign Out
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </SheetContent>
@@ -391,45 +494,69 @@ const Dashboard = () => {
                   <Button variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5" />
                     {notifications.filter((n) => !n.read).length > 0 && (
-                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
                     )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                  <DropdownMenuLabel className="flex items-center justify-between">
+                    <span>Notifications</span>
+                    <Badge variant="secondary" className="ml-2">
+                      {notifications.filter(n => !n.read).length} new
+                    </Badge>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {notifications.slice(0, 3).map((notif) => (
-                    <DropdownMenuItem key={notif.id} className="flex-col items-start p-3 cursor-pointer">
-                      <div className="flex items-start w-full">
-                        {notif.type === 'success' ? (
-                          <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-                        ) : notif.type === 'warning' ? (
-                          <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 mr-2 flex-shrink-0" />
-                        ) : (
-                          <Bell className="w-4 h-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{notif.title}</p>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                            {notif.message}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {formatDate(notif.created_at)}
-                          </p>
-                        </div>
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {notifications.length > 0 ? (
+                      notifications.slice(0, 5).map((notif) => (
+                        <DropdownMenuItem 
+                          key={notif.id} 
+                          className={`p-3 cursor-pointer ${!notif.read ? 'bg-primary/5' : ''}`}
+                          onClick={() => handleMarkNotificationAsRead(notif.id)}
+                        >
+                          <div className="flex items-start gap-3 w-full">
+                            <div className={`mt-0.5 ${notif.type === 'success' ? 'text-green-500' : notif.type === 'warning' ? 'text-amber-500' : 'text-blue-500'}`}>
+                              {notif.type === 'success' ? (
+                                <CheckCircle2 className="w-4 h-4" />
+                              ) : notif.type === 'warning' ? (
+                                <AlertCircle className="w-4 h-4" />
+                              ) : (
+                                <Bell className="w-4 h-4" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-foreground truncate">{notif.title}</p>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {notif.message}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                {formatDate(notif.created_at)}
+                              </p>
+                            </div>
+                            {!notif.read && (
+                              <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1" />
+                            )}
+                          </div>
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center">
+                        <Bell className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">No notifications</p>
                       </div>
-                    </DropdownMenuItem>
-                  ))}
-                  {notifications.length === 0 && (
-                    <div className="p-4 text-center">
-                      <Bell className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">No notifications</p>
-                    </div>
+                    )}
+                  </div>
+                  {notifications.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => navigate("/notifications")} 
+                        className="cursor-pointer justify-center"
+                      >
+                        View all notifications
+                      </DropdownMenuItem>
+                    </>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/notifications")} className="cursor-pointer">
-                    View all notifications
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -454,16 +581,25 @@ const Dashboard = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/profile")} 
+                    className="cursor-pointer"
+                  >
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/settings")} 
+                    className="cursor-pointer"
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
+                  <DropdownMenuItem 
+                    onClick={handleSignOut} 
+                    className="cursor-pointer text-destructive"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     Log out
                   </DropdownMenuItem>
@@ -485,24 +621,29 @@ const Dashboard = () => {
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                 Welcome back, <span className="text-primary">{profile?.full_name || "Applicant"}</span>!
               </h1>
-              <p className="text-lg text-muted-foreground">
-                Here's an overview of your immigration journey.
+              <p className="text-muted-foreground">
+                Here's an overview of your immigration journey and recent activity.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              {!primaryApplication && (
+              {!primaryApplication ? (
                 <Link to="/apply">
-                  <Button className="gap-2 shadow-md hover:shadow-lg transition-shadow">
+                  <Button className="gap-2">
                     <Plus className="w-4 h-4" />
                     Start Application
                   </Button>
                 </Link>
+              ) : (
+                <Button className="gap-2" onClick={() => navigate("/applications")}>
+                  <FileText className="w-4 h-4" />
+                  View Applications
+                </Button>
               )}
               <Link to="/jobs">
-                <Button variant={primaryApplication ? "default" : "outline"} className="gap-2">
+                <Button variant="outline" className="gap-2">
                   <Briefcase className="w-4 h-4" />
                   Find Jobs
                 </Button>
@@ -512,35 +653,35 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { 
               label: "Applications", 
               value: stats.totalApplications, 
               icon: FileText, 
-              color: "text-blue-600",
-              trend: "+2 this month"
+              color: "text-blue-500",
+              bgColor: "bg-blue-50 dark:bg-blue-950/50"
             },
             { 
-              label: "Job Applications", 
+              label: "Jobs Applied", 
               value: stats.totalJobsApplied, 
               icon: Briefcase, 
-              color: "text-green-600",
-              trend: "+5 this month"
+              color: "text-green-500",
+              bgColor: "bg-green-50 dark:bg-green-950/50"
             },
             { 
               label: "Pending Payments", 
               value: stats.pendingPayments, 
               icon: CreditCard, 
-              color: "text-amber-600",
-              trend: primaryApplication ? `${formatCurrency(primaryApplication.total_fee - primaryApplication.paid_amount)} remaining` : ""
+              color: "text-amber-500",
+              bgColor: "bg-amber-50 dark:bg-amber-950/50"
             },
             { 
-              label: "Notifications", 
-              value: notifications.filter((n) => !n.read).length, 
-              icon: Bell, 
-              color: "text-purple-600",
-              trend: `${notifications.length} total`
+              label: "Documents", 
+              value: stats.totalDocuments, 
+              icon: FileCheck, 
+              color: "text-purple-500",
+              bgColor: "bg-purple-50 dark:bg-purple-950/50"
             },
           ].map((stat, index) => (
             <motion.div
@@ -548,26 +689,20 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -4 }}
             >
-              <Card className="overflow-hidden border border-border/50 hover:border-border hover:shadow-md transition-all">
+              <Card className="overflow-hidden border-none shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-1">
                         {stat.label}
                       </p>
-                      <p className="text-3xl font-bold text-foreground">
+                      <p className="text-2xl font-bold text-foreground">
                         {stat.value}
                       </p>
-                      {stat.trend && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {stat.trend}
-                        </p>
-                      )}
                     </div>
-                    <div className={`w-12 h-12 rounded-xl bg-muted flex items-center justify-center ${stat.color}`}>
-                      <stat.icon className="w-6 h-6" />
+                    <div className={`w-12 h-12 rounded-xl ${stat.bgColor} flex items-center justify-center`}>
+                      <stat.icon className={`w-6 h-6 ${stat.color}`} />
                     </div>
                   </div>
                 </CardContent>
@@ -587,12 +722,15 @@ const Dashboard = () => {
                   <div>
                     <CardTitle className="text-xl font-bold">Immigration Application</CardTitle>
                     <CardDescription>
-                      {primaryApplication ? "Track your application progress and next steps" : "Start your immigration journey today"}
+                      {primaryApplication ? "Track your application progress" : "Start your immigration journey"}
                     </CardDescription>
                   </div>
                   {primaryApplication && (
                     <Badge className={`${getStatusColor(primaryApplication.status)} px-3 py-1 font-medium`}>
-                      {formatStatus(primaryApplication.status)}
+                      <span className="flex items-center gap-1">
+                        {getStatusIcon(primaryApplication.status)}
+                        {formatStatus(primaryApplication.status)}
+                      </span>
                     </Badge>
                   )}
                 </div>
@@ -617,28 +755,38 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    {/* Quick Actions */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Button variant="outline" className="gap-2 h-11">
-                        <FileUp className="w-4 h-4" />
+                    {/* Application Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Application Type</p>
+                        <p className="font-medium">{primaryApplication.application_type || "Work Visa"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Started On</p>
+                        <p className="font-medium">{new Date(primaryApplication.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Payment Plan</p>
+                        <p className="font-medium">{primaryApplication.payment_plan || "Standard Plan"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Balance Due</p>
+                        <p className="font-medium text-amber-600 dark:text-amber-400">
+                          {formatCurrency(totalBalance)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t">
+                      <Button variant="outline" className="gap-2" onClick={() => navigate("/documents")}>
+                        <Upload className="w-4 h-4" />
                         Upload Documents
                       </Button>
-                      <Button className="gap-2 h-11">
+                      <Button className="gap-2" onClick={() => navigate("/payments")}>
                         <CreditCard className="w-4 h-4" />
                         Make Payment
                       </Button>
-                    </div>
-
-                    {/* Application Details */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Application Type</p>
-                        <p className="font-medium">{primaryApplication.application_type || "Work Visa"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Started On</p>
-                        <p className="font-medium">{new Date(primaryApplication.created_at).toLocaleDateString()}</p>
-                      </div>
                     </div>
                   </div>
                 ) : (
@@ -659,22 +807,9 @@ const Dashboard = () => {
                   </div>
                 )}
               </CardContent>
-              
-              {primaryApplication && (
-                <CardFooter className="border-t pt-4">
-                  <div className="flex flex-col sm:flex-row gap-3 w-full">
-                    <Button variant="ghost" size="sm" className="flex-1" onClick={() => navigate("/applications")}>
-                      View All Applications
-                    </Button>
-                    <Button size="sm" className="flex-1" onClick={() => navigate("/documents")}>
-                      Submit Documents
-                    </Button>
-                  </div>
-                </CardFooter>
-              )}
             </Card>
 
-            {/* Job Applications Card */}
+            {/* Recent Job Applications */}
             <Card>
               <CardHeader className="pb-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -695,9 +830,11 @@ const Dashboard = () => {
                 {jobApplications.length > 0 ? (
                   <div className="space-y-4">
                     {jobApplications.map((app) => (
-                      <div
+                      <motion.div
                         key={app.id}
-                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                        whileHover={{ scale: 1.01 }}
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer"
+                        onClick={() => navigate(`/jobs/${app.id}`)}
                       >
                         <div className="flex items-start gap-4 mb-3 sm:mb-0">
                           <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -708,6 +845,11 @@ const Dashboard = () => {
                             <p className="text-sm text-muted-foreground mt-1">
                               {app.job?.company} • {app.job?.location}
                             </p>
+                            {app.job?.salary && (
+                              <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                                {app.job.salary}
+                              </p>
+                            )}
                             <div className="flex items-center gap-2 mt-2">
                               <Calendar className="w-3 h-3 text-muted-foreground" />
                               <span className="text-xs text-muted-foreground">
@@ -716,10 +858,10 @@ const Dashboard = () => {
                             </div>
                           </div>
                         </div>
-                        <Badge className={getStatusColor(app.status)}>
+                        <Badge className={`${getStatusColor(app.status)} min-w-[100px] justify-center`}>
                           {formatStatus(app.status)}
                         </Badge>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
@@ -748,7 +890,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" />
-                  Your Profile
+                  Profile Information
                 </CardTitle>
               </CardHeader>
               
@@ -763,7 +905,7 @@ const Dashboard = () => {
                     <p className="font-semibold text-foreground">{profile?.full_name}</p>
                     <p className="text-sm text-muted-foreground">{profile?.email}</p>
                     <Badge variant="secondary" className="mt-1">
-                      Applicant
+                      {primaryApplication ? "Active Applicant" : "Registered User"}
                     </Badge>
                   </div>
                 </div>
@@ -773,21 +915,31 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Country of Origin</span>
-                    <span className="font-medium">{profile?.country_of_origin || "Not set"}</span>
+                    <span className="font-medium">{profile?.country_of_origin || "Not specified"}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Destination</span>
-                    <span className="font-medium text-primary">{profile?.desired_destination || "USA"}</span>
+                    <span className="font-medium text-primary">{profile?.desired_destination || "United States"}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Member Since</span>
-                    <span className="font-medium">{new Date(profile?.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                    <span className="font-medium">
+                      {profile?.created_at 
+                        ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                        : "Recently"
+                      }
+                    </span>
                   </div>
                 </div>
 
-                <Button variant="outline" className="w-full" onClick={() => navigate("/profile")}>
-                  Edit Profile
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => navigate("/profile")}>
+                    Edit Profile
+                  </Button>
+                  <Button variant="outline" className="flex-1" onClick={() => navigate("/settings")}>
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -800,7 +952,7 @@ const Dashboard = () => {
                     Recent Notifications
                   </CardTitle>
                   <Badge variant="secondary">
-                    {notifications.filter((n) => !n.read).length} New
+                    {notifications.filter((n) => !n.read).length} new
                   </Badge>
                 </div>
               </CardHeader>
@@ -808,23 +960,36 @@ const Dashboard = () => {
               <CardContent>
                 {notifications.length > 0 ? (
                   <div className="space-y-3">
-                    {notifications.slice(0, 4).map((notif) => (
+                    {notifications.slice(0, 3).map((notif) => (
                       <div
                         key={notif.id}
-                        className={`p-3 rounded-lg border ${notif.read ? 'border-border' : 'border-primary/30 bg-primary/5'} hover:bg-muted/50 transition-colors cursor-pointer`}
-                        onClick={() => !notif.read && markAsRead(notif.id)}
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                          notif.read 
+                            ? 'border-border hover:border-primary/30' 
+                            : 'border-primary/30 bg-primary/5 hover:bg-primary/10'
+                        }`}
+                        onClick={() => handleMarkNotificationAsRead(notif.id)}
                       >
-                        <p className="font-medium text-sm text-foreground">{notif.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {notif.message}
-                        </p>
-                        <div className="flex items-center justify-between mt-2">
-                          <Badge variant="outline" size="sm">
-                            {notif.type}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDate(notif.created_at)}
-                          </span>
+                        <div className="flex items-start gap-3">
+                          {notif.type === 'success' ? (
+                            <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          ) : notif.type === 'warning' ? (
+                            <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <Bell className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-foreground truncate">{notif.title}</p>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {notif.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {formatDate(notif.created_at)}
+                            </p>
+                          </div>
+                          {!notif.read && (
+                            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1" />
+                          )}
                         </div>
                       </div>
                     ))}
@@ -855,25 +1020,44 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Frequently used actions</CardDescription>
+                <CardDescription>Common tasks and actions</CardDescription>
               </CardHeader>
               
               <CardContent className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="h-auto py-3 flex-col gap-2" onClick={() => navigate("/documents")}>
-                  <FileUp className="w-5 h-5" />
-                  <span className="text-xs">Documents</span>
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-3 flex-col gap-2" 
+                  onClick={() => navigate("/documents")}
+                >
+                  <Upload className="w-5 h-5" />
+                  <span className="text-xs">Upload Docs</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-3 flex-col gap-2" onClick={() => navigate("/payments")}>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-3 flex-col gap-2" 
+                  onClick={() => navigate("/payments")}
+                >
                   <CreditCard className="w-5 h-5" />
-                  <span className="text-xs">Payments</span>
+                  <span className="text-xs">Make Payment</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-3 flex-col gap-2" onClick={() => navigate("/support")}>
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="text-xs">Support</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-3 flex-col gap-2" onClick={() => navigate("/jobs")}>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-3 flex-col gap-2" 
+                  onClick={() => navigate("/jobs")}
+                >
                   <Briefcase className="w-5 h-5" />
                   <span className="text-xs">Find Jobs</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-3 flex-col gap-2" 
+                  onClick={() => navigate("/support")}
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  <span className="text-xs">Get Support</span>
                 </Button>
               </CardContent>
             </Card>
@@ -884,16 +1068,41 @@ const Dashboard = () => {
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-40">
         <div className="flex items-center justify-around h-16">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate("/dashboard")}
+            className="relative"
+          >
             <Home className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/jobs")}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate("/jobs")}
+          >
             <Briefcase className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/apply")}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate("/apply")}
+          >
             <Plus className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/notifications")} className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate("/documents")}
+          >
+            <FileText className="w-5 h-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate("/notifications")}
+            className="relative"
+          >
             <Bell className="w-5 h-5" />
             {notifications.filter((n) => !n.read).length > 0 && (
               <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
