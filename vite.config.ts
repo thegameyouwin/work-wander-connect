@@ -12,27 +12,52 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(), 
+    mode === "development" && componentTagger(),
+    // Add this custom plugin for SPA routing
+    {
+      name: 'rewrite-all-to-index',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          // Skip if it's a file request (has extension)
+          if (req.url?.match(/\.[a-zA-Z0-9]+$/)) {
+            return next();
+          }
+          
+          // For API routes, pass through
+          if (req.url?.startsWith('/api/')) {
+            return next();
+          }
+          
+          // Rewrite all other routes to index.html
+          req.url = '/index.html';
+          next();
+        });
+      }
+    }
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Add this for client-side routing support
+  // Important for SPA routing
   appType: 'spa',
-  // Add this build configuration
   build: {
+    // This ensures proper routing in production
     rollupOptions: {
       input: {
-        main: './index.html',
-      },
+        main: path.resolve(__dirname, 'index.html')
+      }
     },
-    // Generate manifest for better caching
-    manifest: true,
+    outDir: 'dist'
   },
-  // Add this for development server routing
+  // Preview configuration
   preview: {
     port: 8080,
     strictPort: true,
-  },
+    // Add middleware for preview server too
+    middlewareMode: true,
+  }
 }));
