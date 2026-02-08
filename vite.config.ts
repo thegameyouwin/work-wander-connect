@@ -20,11 +20,29 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: './', // This is important for relative paths
+  base: "/", // Important for Vercel
   build: {
-    outDir: 'dist',
+    outDir: "dist",
+    sourcemap: mode === "development",
     rollupOptions: {
-      input: path.resolve(__dirname, 'index.html')
-    }
-  }
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+      },
+      output: {
+        // Vercel-friendly naming
+        chunkFileNames: "assets/[name]-[hash].js",
+        entryFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash].[ext]",
+      },
+    },
+    // Enable chunking for better caching
+    chunkSizeWarningLimit: 1000,
+    // Minify for production
+    minify: mode === "production" ? "esbuild" : false,
+  },
+  // Preview settings
+  preview: {
+    port: 8080,
+    host: true,
+  },
 }));
