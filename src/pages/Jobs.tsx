@@ -4,7 +4,7 @@ import {
   MapPin, DollarSign, Clock, BadgeCheck, ArrowRight, 
   Building2, Search, Loader2, ChevronLeft, ChevronRight, 
   Briefcase, Filter, Star, Users, Globe, Award,
-  CheckCircle, Heart, Bookmark, Eye, Share2
+  CheckCircle, Heart, Bookmark, Eye, Share2, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
 
 interface Job {
   id: string;
@@ -81,15 +81,17 @@ interface Filters {
   visa_sponsorship: boolean;
   is_remote: boolean;
   min_salary: number | null;
+  max_salary: number | null;
   location: string;
+  search: string;
 }
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 24; // Increased from 12 to show more jobs per page
 
 const Jobs = () => {
   usePageSEO({ 
     title: "Visa-Sponsored Jobs | Carewell Supports", 
-    description: "Browse thousands of verified visa-sponsored jobs in the USA, Canada, UK, Australia, and more. Find opportunities in healthcare, tech, construction, and other high-demand fields.", 
+    description: "Browse 370+ verified positions with visa sponsorship from employers worldwide. Find opportunities in healthcare, tech, construction, and other high-demand fields.", 
     canonical: "/jobs" 
   });
 
@@ -106,23 +108,25 @@ const Jobs = () => {
   const [experienceLevels, setExperienceLevels] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "All");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [coverLetter, setCoverLetter] = useState("");
   const [applying, setApplying] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [userHasProfile, setUserHasProfile] = useState(false);
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
   const [viewedJobs, setViewedJobs] = useState<Set<string>>(new Set());
+  
   const [filters, setFilters] = useState<Filters>({
-    category: "All",
-    job_type: "All",
-    experience_level: "All",
-    visa_sponsorship: false,
-    is_remote: false,
-    min_salary: null,
-    location: "All",
+    category: searchParams.get("category") || "All",
+    job_type: searchParams.get("job_type") || "All",
+    experience_level: searchParams.get("experience_level") || "All",
+    visa_sponsorship: searchParams.get("visa_sponsorship") === "true",
+    is_remote: searchParams.get("is_remote") === "true",
+    min_salary: searchParams.get("min_salary") ? Number(searchParams.get("min_salary")) : null,
+    max_salary: searchParams.get("max_salary") ? Number(searchParams.get("max_salary")) : null,
+    location: searchParams.get("location") || "All",
+    search: searchParams.get("search") || "",
   });
   
   const { user, profile } = useAuth();
@@ -138,15 +142,11 @@ const Jobs = () => {
           jobTypesRes,
           experienceRes,
           locationsRes,
-          statsRes,
         ] = await Promise.all([
           supabase.from("jobs").select("category").not("category", "is", null),
           supabase.from("jobs").select("job_type").not("job_type", "is", null),
           supabase.from("jobs").select("experience_level").not("experience_level", "is", null),
           supabase.from("jobs").select("location"),
-          supabase
-            .from("jobs")
-            .select("visa_sponsorship, is_featured, is_remote", { count: "exact" }),
         ]);
 
         // Process unique categories
@@ -172,23 +172,42 @@ const Jobs = () => {
           const uniqueLocations = [...new Set(locationsRes.data.map(j => j.location).filter(Boolean))] as string[];
           setLocations(uniqueLocations.sort());
         }
-
-        // Calculate stats
-        if (statsRes.data) {
-          const stats = {
-            totalJobs: statsRes.count || 0,
-            featuredJobs: statsRes.data.filter(j => j.is_featured).length,
-            remoteJobs: statsRes.data.filter(j => j.is_remote).length,
-            visaSponsorshipJobs: statsRes.data.filter(j => j.visa_sponsorship).length,
-          };
-          setJobStats(stats);
-        }
       } catch (error) {
         console.error("Error fetching filter options:", error);
       }
     };
 
     fetchFilterOptions();
+  }, []);
+
+  // Fetch job stats
+  useEffect(() => {
+    const fetchJobStats = async () => {
+      try {
+        const [
+          totalRes,
+          featuredRes,
+          remoteRes,
+          visaRes,
+        ] = await Promise.all([
+          supabase.from("jobs").select("id", { count: "exact", head: true }),
+          supabase.from("jobs").select("id", { count: "exact", head: true }).eq("is_featured", true),
+          supabase.from("jobs").select("id", { count: "exact", head: true }).eq("is_remote", true),
+          supabase.from("jobs").select("id", { count: "exact", head: true }).eq("visa_sponsorship", true),
+        ]);
+
+        setJobStats({
+          totalJobs: totalRes.count || 0,
+          featuredJobs: featuredRes.count || 0,
+          remoteJobs: remoteRes.count || 0,
+          visaSponsorshipJobs: visaRes.count || 0,
+        });
+      } catch (error) {
+        console.error("Error fetching job stats:", error);
+      }
+    };
+
+    fetchJobStats();
   }, []);
 
   // Check user profile completion
@@ -233,47 +252,76 @@ const Jobs = () => {
     setLoading(true);
     
     try {
-      // Build query
-      let query = supabase
+      // Build count query
+      let countQuery = supabase
         .from("jobs")
-        .select("*, company_logos!inner(logo_url)", { count: "exact" });
+        .select("*", { count: "exact", head: true });
+
+      // Build data query
+      let dataQuery = supabase
+        .from("jobs")
+        .select("*, company_logos!left(logo_url)");
+
+      // Apply filters to both queries
+      const applyFilters = (query: any) => {
+        let q = query;
+        if (filters.category !== "All") {
+          q = q.eq("category", filters.category);
+        }
+        if (filters.job_type !== "All") {
+          q = q.eq("job_type", filters.job_type);
+        }
+        if (filters.experience_level !== "All") {
+          q = q.eq("experience_level", filters.experience_level);
+        }
+        if (filters.visa_sponsorship) {
+          q = q.eq("visa_sponsorship", true);
+        }
+        if (filters.is_remote) {
+          q = q.eq("is_remote", true);
+        }
+        if (filters.location !== "All") {
+          q = q.eq("location", filters.location);
+        }
+        if (filters.min_salary) {
+          q = q.gte("salary_min", filters.min_salary);
+        }
+        if (filters.max_salary) {
+          q = q.lte("salary_max", filters.max_salary);
+        }
+        if (filters.search) {
+          q = q.or(`title.ilike.%${filters.search}%,company.ilike.%${filters.search}%,location.ilike.%${filters.search}%`);
+        }
+        return q;
+      };
 
       // Apply filters
-      if (filters.category !== "All") {
-        query = query.eq("category", filters.category);
-      }
-      if (filters.job_type !== "All") {
-        query = query.eq("job_type", filters.job_type);
-      }
-      if (filters.experience_level !== "All") {
-        query = query.eq("experience_level", filters.experience_level);
-      }
-      if (filters.visa_sponsorship) {
-        query = query.eq("visa_sponsorship", true);
-      }
-      if (filters.is_remote) {
-        query = query.eq("is_remote", true);
-      }
-      if (filters.location !== "All") {
-        query = query.eq("location", filters.location);
-      }
-      if (filters.min_salary) {
-        query = query.gte("salary_min", filters.min_salary);
+      countQuery = applyFilters(countQuery);
+      dataQuery = applyFilters(dataQuery);
+
+      // Execute count query
+      const { count, error: countError } = await countQuery;
+      if (countError) throw countError;
+
+      // Calculate total pages
+      const totalItems = count || 0;
+      const calculatedPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+      setTotalPages(calculatedPages);
+
+      // Reset to page 1 if current page exceeds total pages
+      if (currentPage > calculatedPages && calculatedPages > 0) {
+        setCurrentPage(1);
       }
 
-      // Apply search
-      if (searchTerm) {
-        query = query.or(`title.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%`);
-      }
-
-      // Order and paginate
-      const { data, error, count } = await query
+      // Execute data query with pagination
+      const { data, error: dataError } = await dataQuery
         .order("is_featured", { ascending: false })
         .order("created_at", { ascending: false })
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
 
-      if (error) throw error;
+      if (dataError) throw dataError;
 
+      // Process jobs with additional stats
       const jobsWithStats = await Promise.all(
         (data || []).map(async (job: any) => {
           // Get application count
@@ -298,7 +346,6 @@ const Jobs = () => {
       );
 
       setJobs(jobsWithStats);
-      setJobStats(prev => ({ ...prev, totalJobs: count || 0 }));
     } catch (error) {
       console.error("Error fetching jobs:", error);
       toast({
@@ -309,11 +356,28 @@ const Jobs = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, searchTerm, currentPage, toast]);
+  }, [filters, currentPage, toast]);
 
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
+
+  // Update search params when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (filters.category !== "All") params.set("category", filters.category);
+    if (filters.job_type !== "All") params.set("job_type", filters.job_type);
+    if (filters.experience_level !== "All") params.set("experience_level", filters.experience_level);
+    if (filters.visa_sponsorship) params.set("visa_sponsorship", "true");
+    if (filters.is_remote) params.set("is_remote", "true");
+    if (filters.location !== "All") params.set("location", filters.location);
+    if (filters.min_salary) params.set("min_salary", filters.min_salary.toString());
+    if (filters.max_salary) params.set("max_salary", filters.max_salary?.toString() || "");
+    if (filters.search) params.set("search", filters.search);
+    
+    setSearchParams(params);
+  }, [filters, setSearchParams]);
 
   // Track job view
   const trackJobView = async (jobId: string) => {
@@ -508,11 +572,9 @@ const Jobs = () => {
     return date.toLocaleDateString();
   };
 
-  const totalPages = Math.ceil(jobStats.totalJobs / ITEMS_PER_PAGE);
-
   const handleFilterChange = (key: keyof Filters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const clearFilters = () => {
@@ -523,9 +585,10 @@ const Jobs = () => {
       visa_sponsorship: false,
       is_remote: false,
       min_salary: null,
+      max_salary: null,
       location: "All",
+      search: "",
     });
-    setSearchTerm("");
     setCurrentPage(1);
   };
 
@@ -535,6 +598,34 @@ const Jobs = () => {
     const diffDays = Math.floor((now.getTime() - created.getTime()) / (1000 * 3600 * 24));
     return diffDays <= 7;
   };
+
+  // Calculate salary range for slider
+  const salaryRange = useMemo(() => {
+    const salaries = jobs
+      .filter(job => job.salary_min !== null)
+      .map(job => job.salary_min as number);
+    
+    if (salaries.length === 0) return [0, 200000];
+    
+    return [
+      Math.min(...salaries),
+      Math.max(...salaries.filter(s => s < 500000)) // Cap at 500k for reasonable range
+    ];
+  }, [jobs]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.category !== "All") count++;
+    if (filters.job_type !== "All") count++;
+    if (filters.experience_level !== "All") count++;
+    if (filters.visa_sponsorship) count++;
+    if (filters.is_remote) count++;
+    if (filters.location !== "All") count++;
+    if (filters.min_salary) count++;
+    if (filters.max_salary) count++;
+    if (filters.search) count++;
+    return count;
+  }, [filters]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -571,19 +662,19 @@ const Jobs = () => {
             </Card>
             <Card className="text-center">
               <CardContent className="p-6">
-                <div className="text-3xl font-bold text-emerald-600 mb-2">{jobStats.visaSponsorshipJobs}</div>
+                <div className="text-3xl font-bold text-emerald-600 mb-2">{jobStats.visaSponsorshipJobs.toLocaleString()}</div>
                 <p className="text-sm text-muted-foreground">Visa Sponsorship</p>
               </CardContent>
             </Card>
             <Card className="text-center">
               <CardContent className="p-6">
-                <div className="text-3xl font-bold text-amber-600 mb-2">{jobStats.remoteJobs}</div>
+                <div className="text-3xl font-bold text-amber-600 mb-2">{jobStats.remoteJobs.toLocaleString()}</div>
                 <p className="text-sm text-muted-foreground">Remote Jobs</p>
               </CardContent>
             </Card>
             <Card className="text-center">
               <CardContent className="p-6">
-                <div className="text-3xl font-bold text-purple-600 mb-2">{jobStats.featuredJobs}</div>
+                <div className="text-3xl font-bold text-purple-600 mb-2">{jobStats.featuredJobs.toLocaleString()}</div>
                 <p className="text-sm text-muted-foreground">Featured</p>
               </CardContent>
             </Card>
@@ -598,34 +689,37 @@ const Jobs = () => {
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     placeholder="Search job titles, companies, locations, or skills..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setSearchParams(prev => {
-                        if (e.target.value) {
-                          prev.set("search", e.target.value);
-                        } else {
-                          prev.delete("search");
-                        }
-                        return prev;
-                      });
-                    }}
+                    value={filters.search}
+                    onChange={(e) => handleFilterChange("search", e.target.value)}
                     className="pl-12 h-14 text-lg"
                   />
                 </div>
 
                 {/* Quick Filters */}
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Sheet>
                     <SheetTrigger asChild>
                       <Button variant="outline" className="gap-2">
                         <Filter className="w-4 h-4" />
                         Filters
+                        {activeFiltersCount > 0 && (
+                          <Badge variant="secondary" className="ml-1">
+                            {activeFiltersCount}
+                          </Badge>
+                        )}
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-full sm:max-w-md">
+                    <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
                       <SheetHeader>
-                        <SheetTitle>Filter Jobs</SheetTitle>
+                        <SheetTitle className="flex items-center justify-between">
+                          <span>Filter Jobs</span>
+                          {activeFiltersCount > 0 && (
+                            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+                              <X className="w-3 h-3" />
+                              Clear All
+                            </Button>
+                          )}
+                        </SheetTitle>
                       </SheetHeader>
                       <div className="py-6 space-y-6">
                         {/* Category */}
@@ -704,6 +798,31 @@ const Jobs = () => {
                           </Select>
                         </div>
 
+                        {/* Salary Range */}
+                        <div>
+                          <Label className="mb-2 block">Salary Range</Label>
+                          <div className="space-y-4">
+                            <Slider
+                              min={salaryRange[0]}
+                              max={salaryRange[1]}
+                              step={10000}
+                              value={[
+                                filters.min_salary || salaryRange[0],
+                                filters.max_salary || salaryRange[1]
+                              ]}
+                              onValueChange={(value) => {
+                                handleFilterChange("min_salary", value[0]);
+                                handleFilterChange("max_salary", value[1]);
+                              }}
+                              className="mt-2"
+                            />
+                            <div className="flex items-center justify-between text-sm text-muted-foreground">
+                              <span>${(filters.min_salary || salaryRange[0]).toLocaleString()}</span>
+                              <span>${(filters.max_salary || salaryRange[1]).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Toggles */}
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
@@ -733,10 +852,6 @@ const Jobs = () => {
                             />
                           </div>
                         </div>
-
-                        <Button onClick={clearFilters} variant="outline" className="w-full">
-                          Clear All Filters
-                        </Button>
                       </div>
                     </SheetContent>
                   </Sheet>
@@ -746,18 +861,35 @@ const Jobs = () => {
                     {filters.category !== "All" && (
                       <Badge variant="secondary" className="gap-1">
                         {filters.category}
+                        <button onClick={() => handleFilterChange("category", "All")}>
+                          <X className="w-3 h-3" />
+                        </button>
                       </Badge>
                     )}
                     {filters.visa_sponsorship && (
                       <Badge variant="secondary" className="gap-1">
                         <BadgeCheck className="w-3 h-3" />
                         Visa Sponsorship
+                        <button onClick={() => handleFilterChange("visa_sponsorship", false)}>
+                          <X className="w-3 h-3" />
+                        </button>
                       </Badge>
                     )}
                     {filters.is_remote && (
                       <Badge variant="secondary" className="gap-1">
                         <MapPin className="w-3 h-3" />
                         Remote
+                        <button onClick={() => handleFilterChange("is_remote", false)}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {filters.search && (
+                      <Badge variant="secondary" className="gap-1">
+                        Search: {filters.search}
+                        <button onClick={() => handleFilterChange("search", "")}>
+                          <X className="w-3 h-3" />
+                        </button>
                       </Badge>
                     )}
                   </div>
@@ -778,35 +910,40 @@ const Jobs = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Star className="w-5 h-5 text-amber-500" />
-                    Featured Jobs
+                    Quick Filters
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {jobs
-                    .filter(job => job.is_featured)
-                    .slice(0, 5)
-                    .map(job => (
-                      <button
-                        key={job.id}
-                        onClick={() => handleJobSelect(job)}
-                        className="text-left p-3 rounded-lg border hover:border-primary/30 hover:bg-primary/5 transition-colors w-full"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Building2 className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{job.title}</p>
-                            <p className="text-xs text-muted-foreground truncate">{job.company}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" size="sm">
-                                Featured
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
+                  <Button 
+                    variant={filters.visa_sponsorship ? "default" : "outline"} 
+                    className="w-full justify-start gap-2"
+                    onClick={() => handleFilterChange("visa_sponsorship", !filters.visa_sponsorship)}
+                  >
+                    <BadgeCheck className="w-4 h-4" />
+                    Visa Sponsorship ({jobStats.visaSponsorshipJobs})
+                  </Button>
+                  <Button 
+                    variant={filters.is_remote ? "default" : "outline"} 
+                    className="w-full justify-start gap-2"
+                    onClick={() => handleFilterChange("is_remote", !filters.is_remote)}
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Remote Jobs ({jobStats.remoteJobs})
+                  </Button>
+                  <Button 
+                    variant={filters.category === "Technology" ? "default" : "outline"} 
+                    className="w-full justify-start"
+                    onClick={() => handleFilterChange("category", filters.category === "Technology" ? "All" : "Technology")}
+                  >
+                    Tech Jobs
+                  </Button>
+                  <Button 
+                    variant={filters.category === "Healthcare" ? "default" : "outline"} 
+                    className="w-full justify-start"
+                    onClick={() => handleFilterChange("category", filters.category === "Healthcare" ? "All" : "Healthcare")}
+                  >
+                    Healthcare Jobs
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -817,16 +954,10 @@ const Jobs = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">
-                    {loading ? "Loading jobs..." : `${jobs.length} Jobs Found`}
+                    {loading ? "Loading jobs..." : `${jobs.length} of ${jobStats.totalJobs} Jobs`}
                   </h2>
                   <p className="text-muted-foreground">
-                    {!loading && (
-                      filters.category !== "All" || 
-                      filters.visa_sponsorship || 
-                      filters.is_remote ? 
-                      "Based on your filters" : 
-                      "Latest job opportunities"
-                    )}
+                    Page {currentPage} of {totalPages}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -834,7 +965,7 @@ const Jobs = () => {
                     value={currentPage.toString()} 
                     onValueChange={(value) => setCurrentPage(parseInt(value))}
                   >
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-28">
                       <SelectValue placeholder="Page" />
                     </SelectTrigger>
                     <SelectContent>
@@ -877,7 +1008,7 @@ const Jobs = () => {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
-                          transition={{ delay: index * 0.05 }}
+                          transition={{ delay: index * 0.03 }}
                           className="group"
                         >
                           <Card className="h-full hover:shadow-xl hover:border-primary/30 transition-all duration-300 overflow-hidden">
@@ -912,14 +1043,6 @@ const Jobs = () => {
                                       onClick={(e) => handleSaveJob(job.id, e)}
                                     >
                                       <Heart className={`w-4 h-4 ${savedJobs.has(job.id) ? "fill-red-500 text-red-500" : ""}`} />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => handleShareJob(job)}
-                                    >
-                                      <Share2 className="w-4 h-4" />
                                     </Button>
                                   </div>
                                 </div>
@@ -981,14 +1104,6 @@ const Jobs = () => {
                                       <Users className="w-3 h-3" />
                                       {job.application_count || 0} applicants
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                      <Eye className="w-3 h-3" />
-                                      {job.views_count || 0} views
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <Bookmark className="w-3 h-3" />
-                                      {job.saved_count || 0} saved
-                                    </div>
                                   </div>
                                   <Button 
                                     size="sm"
@@ -1009,51 +1124,56 @@ const Jobs = () => {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-12">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNum: number;
-                          if (totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNum = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNum = totalPages - 4 + i;
-                          } else {
-                            pageNum = currentPage - 2 + i;
-                          }
-                          
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={currentPage === pageNum ? "default" : "outline"}
-                              size="icon"
-                              onClick={() => setCurrentPage(pageNum)}
-                              className="w-10 h-10"
-                            >
-                              {pageNum}
-                            </Button>
-                          );
-                        })}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12 pt-8 border-t">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, jobStats.totalJobs)} of {jobStats.totalJobs} jobs
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum: number;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+                            
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                size="icon"
+                                onClick={() => setCurrentPage(pageNum)}
+                                className="w-10 h-10"
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          })}
+                        </div>
 
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </>
@@ -1093,11 +1213,11 @@ const Jobs = () => {
             </div>
 
             {/* Description */}
-            {selectedJob?.full_description && (
+            {selectedJob?.description && (
               <div>
                 <h4 className="font-medium text-foreground mb-2">Job Description</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-line">
-                  {selectedJob.full_description}
+                  {selectedJob.description}
                 </p>
               </div>
             )}
