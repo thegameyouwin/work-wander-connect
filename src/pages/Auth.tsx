@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
+import logo from "@/assets/logo.png"; // Import the same logo
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -112,20 +113,20 @@ const Auth = () => {
     signInForm.setValue("password", "");
   };
 
-  // Logo Component for consistency
+  // Logo Component using the same logo as Navbar
   const Logo = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <Link to="/" className={`flex items-center gap-3 ${isMobile ? "justify-center" : ""}`}>
-      <div className={`${isMobile ? "w-12 h-12" : "w-14 h-14"} rounded-2xl bg-primary flex items-center justify-center`}>
-        <Globe className={`${isMobile ? "w-7 h-7" : "w-8 h-8"} text-white`} />
-      </div>
-      <div className="flex flex-col">
-        <span className={`${isMobile ? "text-xl" : "text-2xl"} font-bold text-foreground lg:text-white`}>
-          Carewell
-        </span>
-        <span className={`${isMobile ? "text-xs" : "text-sm"} text-muted-foreground lg:text-white/80 -mt-1`}>
-          Supports
-        </span>
-      </div>
+    <Link to="/" className={`flex items-center gap-2 ${isMobile ? "justify-center" : ""}`}>
+      <img 
+        src={logo} 
+        alt="Carewell Supports" 
+        className={`${isMobile ? "h-10" : "h-12 lg:h-14"} w-auto`}
+      />
+      {!isMobile && (
+        <div className="hidden lg:flex flex-col">
+          <span className="text-lg lg:text-xl font-bold text-white">Carewell</span>
+          <span className="text-sm text-white/80 -mt-1">Supports</span>
+        </div>
+      )}
     </Link>
   );
 
@@ -138,7 +139,7 @@ const Auth = () => {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-white blur-3xl" />
         </div>
         
-        <div className="relative z-10 flex flex-col justify-center px-6 sm:px-8 lg:px-12 xl:px-16 py-8 lg:py-0 h-full">
+        <div className="relative z-10 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-8 lg:py-0 h-full">
           {/* Desktop Logo - Hidden on mobile */}
           <div className="hidden lg:block mb-8 lg:mb-12">
             <Logo />
@@ -148,26 +149,26 @@ const Auth = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:pr-8"
+            className="lg:pr-4 xl:pr-8"
           >
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 lg:mb-6">
+            <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 lg:mb-6 leading-tight">
               Your Pathway to <br />Global Opportunities
             </h1>
-            <p className="text-base sm:text-lg text-white/90 mb-6 lg:mb-8 max-w-lg">
+            <p className="text-sm sm:text-base md:text-lg text-white/90 mb-6 lg:mb-8 max-w-lg">
               Join thousands of successful professionals who've built their international careers with our trusted guidance.
             </p>
 
-            <div className="space-y-4 mb-8 lg:mb-12">
+            <div className="space-y-3 sm:space-y-4 mb-6 lg:mb-10">
               {[
                 { icon: Shield, text: "Secure & verified visa sponsorship" },
                 { icon: Briefcase, text: "Guaranteed job placement assistance" },
                 { icon: Globe, text: "Global network of 45+ countries" }
               ].map((item) => (
-                <div key={item.text} className="flex items-center gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                    <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <div key={item.text} className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                    <item.icon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                   </div>
-                  <span className="text-sm sm:text-base text-white/90">{item.text}</span>
+                  <span className="text-xs sm:text-sm md:text-base text-white/90">{item.text}</span>
                 </div>
               ))}
             </div>
@@ -180,9 +181,9 @@ const Auth = () => {
                 { value: "45+", label: "Countries" }
               ].map((stat) => (
                 <Card key={stat.label} className="bg-white/10 backdrop-blur-sm border-white/20">
-                  <CardContent className="p-3 lg:p-4 text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-white">{stat.value}</div>
-                    <div className="text-xs sm:text-sm text-white/80">{stat.label}</div>
+                  <CardContent className="p-2 sm:p-3 lg:p-4 text-center">
+                    <div className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white">{stat.value}</div>
+                    <div className="text-xs sm:text-sm text-white/80 mt-1">{stat.label}</div>
                   </CardContent>
                 </Card>
               ))}
@@ -192,25 +193,25 @@ const Auth = () => {
       </div>
 
       {/* Right Side - Form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 lg:py-0">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-5 md:px-6 py-6 sm:py-8 lg:py-0">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full max-w-md"
+          className="w-full max-w-sm sm:max-w-md"
         >
           {/* Mobile Logo */}
-          <div className="lg:hidden mb-6 sm:mb-8">
+          <div className="lg:hidden mb-5 sm:mb-6 md:mb-8">
             <Logo isMobile />
           </div>
 
-          <Card className="border shadow-lg sm:shadow-xl">
-            <CardContent className="p-6 sm:p-8">
-              <div className="text-center mb-6 sm:mb-8">
-                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground mb-2">
+          <Card className="border shadow-md sm:shadow-lg">
+            <CardContent className="p-5 sm:p-6 md:p-8">
+              <div className="text-center mb-5 sm:mb-6 md:mb-8">
+                <h2 className="font-heading text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2">
                   {isSignUp ? "Create Account" : "Welcome Back"}
                 </h2>
-                <p className="text-sm sm:text-base text-muted-foreground">
+                <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
                   {isSignUp
                     ? "Start your international career journey"
                     : "Access your personalized dashboard"}
@@ -219,21 +220,21 @@ const Auth = () => {
 
               {/* Sign In Form */}
               {!isSignUp && (
-                <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4 sm:space-y-6">
+                <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4 sm:space-y-5 md:space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm sm:text-base">Email Address</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                       <Input
                         id="email"
                         type="email"
                         placeholder="you@example.com"
-                        className="pl-9 sm:pl-10 h-11 sm:h-12 text-sm sm:text-base"
+                        className="pl-8 sm:pl-10 h-10 sm:h-11 md:h-12 text-sm sm:text-base"
                         {...signInForm.register("email")}
                       />
                     </div>
                     {signInForm.formState.errors.email && (
-                      <p className="text-xs sm:text-sm text-destructive mt-1">
+                      <p className="text-xs text-destructive mt-1">
                         {signInForm.formState.errors.email.message}
                       </p>
                     )}
@@ -250,12 +251,12 @@ const Auth = () => {
                       </Link>
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="pl-9 sm:pl-10 pr-9 sm:pr-10 h-11 sm:h-12 text-sm sm:text-base"
+                        className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-10 sm:h-11 md:h-12 text-sm sm:text-base"
                         {...signInForm.register("password")}
                       />
                       <button
@@ -265,13 +266,13 @@ const Auth = () => {
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? 
-                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : 
-                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" /> : 
+                          <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                         }
                       </button>
                     </div>
                     {signInForm.formState.errors.password && (
-                      <p className="text-xs sm:text-sm text-destructive mt-1">
+                      <p className="text-xs text-destructive mt-1">
                         {signInForm.formState.errors.password.message}
                       </p>
                     )}
@@ -279,12 +280,12 @@ const Auth = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full h-11 sm:h-12 text-sm sm:text-base font-medium" 
+                    className="w-full h-10 sm:h-11 md:h-12 text-sm sm:text-base font-medium" 
                     disabled={isLoading || signInForm.formState.isSubmitting}
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 animate-spin" />
                         Signing in...
                       </>
                     ) : (
@@ -296,21 +297,21 @@ const Auth = () => {
 
               {/* Sign Up Form */}
               {isSignUp && (
-                <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4 sm:space-y-6">
+                <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4 sm:space-y-5 md:space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="fullName" className="text-sm sm:text-base">Full Name</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                       <Input
                         id="fullName"
                         type="text"
                         placeholder="John Doe"
-                        className="pl-9 sm:pl-10 h-11 sm:h-12 text-sm sm:text-base"
+                        className="pl-8 sm:pl-10 h-10 sm:h-11 md:h-12 text-sm sm:text-base"
                         {...signUpForm.register("fullName")}
                       />
                     </div>
                     {signUpForm.formState.errors.fullName && (
-                      <p className="text-xs sm:text-sm text-destructive mt-1">
+                      <p className="text-xs text-destructive mt-1">
                         {signUpForm.formState.errors.fullName.message}
                       </p>
                     )}
@@ -319,17 +320,17 @@ const Auth = () => {
                   <div className="space-y-2">
                     <Label htmlFor="signUpEmail" className="text-sm sm:text-base">Email Address</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                       <Input
                         id="signUpEmail"
                         type="email"
                         placeholder="you@example.com"
-                        className="pl-9 sm:pl-10 h-11 sm:h-12 text-sm sm:text-base"
+                        className="pl-8 sm:pl-10 h-10 sm:h-11 md:h-12 text-sm sm:text-base"
                         {...signUpForm.register("email")}
                       />
                     </div>
                     {signUpForm.formState.errors.email && (
-                      <p className="text-xs sm:text-sm text-destructive mt-1">
+                      <p className="text-xs text-destructive mt-1">
                         {signUpForm.formState.errors.email.message}
                       </p>
                     )}
@@ -339,12 +340,12 @@ const Auth = () => {
                     <div className="space-y-2">
                       <Label htmlFor="signUpPassword" className="text-sm sm:text-base">Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                         <Input
                           id="signUpPassword"
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-9 sm:pl-10 pr-9 sm:pr-10 h-11 sm:h-12 text-sm sm:text-base"
+                          className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-10 sm:h-11 md:h-12 text-sm sm:text-base"
                           {...signUpForm.register("password")}
                         />
                         <button
@@ -354,13 +355,13 @@ const Auth = () => {
                           aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                           {showPassword ? 
-                            <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : 
-                            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" /> : 
+                            <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                           }
                         </button>
                       </div>
                       {signUpForm.formState.errors.password && (
-                        <p className="text-xs sm:text-sm text-destructive mt-1">
+                        <p className="text-xs text-destructive mt-1">
                           {signUpForm.formState.errors.password.message}
                         </p>
                       )}
@@ -369,12 +370,12 @@ const Auth = () => {
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword" className="text-sm sm:text-base">Confirm Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
                         <Input
                           id="confirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-9 sm:pl-10 pr-9 sm:pr-10 h-11 sm:h-12 text-sm sm:text-base"
+                          className="pl-8 sm:pl-10 pr-8 sm:pr-10 h-10 sm:h-11 md:h-12 text-sm sm:text-base"
                           {...signUpForm.register("confirmPassword")}
                         />
                         <button
@@ -384,13 +385,13 @@ const Auth = () => {
                           aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                         >
                           {showConfirmPassword ? 
-                            <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : 
-                            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" /> : 
+                            <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                           }
                         </button>
                       </div>
                       {signUpForm.formState.errors.confirmPassword && (
-                        <p className="text-xs sm:text-sm text-destructive mt-1">
+                        <p className="text-xs text-destructive mt-1">
                           {signUpForm.formState.errors.confirmPassword.message}
                         </p>
                       )}
@@ -417,12 +418,12 @@ const Auth = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full h-11 sm:h-12 text-sm sm:text-base font-medium" 
+                    className="w-full h-10 sm:h-11 md:h-12 text-sm sm:text-base font-medium" 
                     disabled={isLoading || signUpForm.formState.isSubmitting}
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 animate-spin" />
                         Creating account...
                       </>
                     ) : (
@@ -433,9 +434,9 @@ const Auth = () => {
               )}
 
               {/* Toggle */}
-              <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
+              <div className="mt-5 sm:mt-6 md:mt-8 pt-4 sm:pt-5 md:pt-6 border-t">
                 <div className="text-center">
-                  <p className="text-sm sm:text-base text-muted-foreground">
+                  <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
                     {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
                     <button
                       type="button"
@@ -449,7 +450,7 @@ const Auth = () => {
                       {isSignUp ? "Sign In here" : "Sign up now"}
                     </button>
                   </p>
-                  <p className="text-xs text-muted-foreground mt-3 sm:mt-4">
+                  <p className="text-xs text-muted-foreground mt-2 sm:mt-3">
                     By continuing, you agree to our{" "}
                     <Link to="/terms" className="text-primary hover:underline">Terms</Link>{" "}
                     and{" "}
@@ -461,9 +462,9 @@ const Auth = () => {
           </Card>
 
           {/* Back to Home */}
-          <div className="mt-4 sm:mt-6 text-center">
-            <Link to="/" className="text-xs sm:text-sm text-muted-foreground hover:text-primary flex items-center justify-center gap-2">
-              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 rotate-180" />
+          <div className="mt-4 sm:mt-5 text-center">
+            <Link to="/" className="text-xs sm:text-sm text-muted-foreground hover:text-primary flex items-center justify-center gap-1 sm:gap-2">
+              <ArrowRight className="w-3 h-3 sm:w-3 sm:h-3 md:w-4 md:h-4 rotate-180" />
               Back to home
             </Link>
           </div>
