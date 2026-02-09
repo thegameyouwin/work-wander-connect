@@ -11,12 +11,14 @@ import {
   Shield,
   CheckCircle,
   ArrowUpRight,
-  MessageSquare
+  MessageSquare,
+  ChevronUp
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import logo from "@/assets/logo.png";
+import logoWhite from "@/assets/logo-white.png"; // Create a white version or use the same
 
 const footerLinks = {
   services: [
@@ -62,6 +64,10 @@ const certifications = [
 export const Footer = () => {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
+
+  // Try using a white version of your logo, or adjust the logo color
+  const logoSrc = logo; // Use your existing logo
+  // If you have a white version: const logoSrc = logoWhite;
 
   return (
     <footer className="bg-gradient-to-b from-foreground to-foreground/95 text-background relative overflow-hidden">
@@ -120,10 +126,17 @@ export const Footer = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6 group">
               <div className="relative overflow-hidden rounded-xl p-2 bg-gradient-to-br from-primary to-primary/80 group-hover:scale-105 transition-transform duration-300">
+                {/* Remove the brightness/invert filters and add white background if needed */}
                 <img 
-                  src={logo} 
+                  src={logoSrc} 
                   alt="Carewell Supports" 
-                  className="h-14 w-auto brightness-0 invert"
+                  className="h-14 w-auto"
+                  // If logo is dark, add a white background:
+                  style={{ 
+                    backgroundColor: '#ffffff',
+                    padding: '2px',
+                    borderRadius: '6px'
+                  }}
                 />
               </div>
               <div>
@@ -273,13 +286,13 @@ export const Footer = () => {
         </div>
       </div>
 
-      {/* Back to Top */}
+      {/* Back to Top - Fixed the icon */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all duration-300 hover:scale-110"
         aria-label="Back to top"
       >
-        <ArrowUpRight className="w-5 h-5 rotate-45" />
+        <ChevronUp className="w-5 h-5" />
       </button>
     </footer>
   );
