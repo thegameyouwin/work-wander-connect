@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, Banknote, Building, CheckCircle, Loader2 } from "lucide-react";
+import { CreditCard, Banknote, Building, CheckCircle, Loader2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PaymentFlowProps {
   applicationId: string;
@@ -31,6 +32,7 @@ export const PaymentFlow = ({
   balanceDue,
   onPaymentSuccess 
 }: PaymentFlowProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [selectedMethod, setSelectedMethod] = useState("credit_card");
   const [amount, setAmount] = useState<number | null>(null);
@@ -42,14 +44,32 @@ export const PaymentFlow = ({
   const getPaymentOptions = () => {
     if (paymentPlan === "deferred") {
       const firstInstallment = Math.ceil(totalFee * 0.5);
-      return [
-        { label: "First Installment (50%)", amount: firstInstallment },
-        { label: "Pay Remaining Balance", amount: balanceDue },
-        { label: "Custom Amount", amount: 0 }
-      ];
+      const remainingBalance = balanceDue;
+      
+      if (paidAmount === 0) {
+        // Haven't paid anything yet
+        return [
+          { label: "First Installment (50%)", amount: firstInstallment },
+          { label: "Custom Amount", amount: 0 }
+        ];
+      } else if (paidAmount < totalFee * 0.5) {
+        // Paid less than 50%
+        return [
+          { label: "Complete First Installment", amount: firstInstallment - paidAmount },
+          { label: "Pay Remaining Balance", amount: remainingBalance },
+          { label: "Custom Amount", amount: 0 }
+        ];
+      } else {
+        // Paid at least 50%
+        return [
+          { label: "Pay Remaining Balance", amount: remainingBalance },
+          { label: "Custom Amount", amount: 0 }
+        ];
+      }
     } else if (paymentPlan === "milestone") {
+      const nextMilestone = Math.ceil(totalFee / 4);
       return [
-        { label: "Next Milestone Payment", amount: Math.ceil(balanceDue / 4) },
+        { label: "Next Milestone", amount: nextMilestone },
         { label: "Pay Minimum", amount: 100 },
         { label: "Full Balance", amount: balanceDue },
         { label: "Custom Amount", amount: 0 }
@@ -71,6 +91,15 @@ export const PaymentFlow = ({
   };
 
   const handlePayment = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please log in to make a payment.",
+      });
+      return;
+    }
+
     if (!amount || amount <= 0 || amount > balanceDue) {
       toast({
         variant: "destructive",
@@ -85,17 +114,26 @@ export const PaymentFlow = ({
       const processingFee = calculateProcessingFee();
       const totalAmount = amount + processingFee;
       
+      // Determine installment number
+      let installmentNumber = 1;
+      if (paymentPlan === "deferred") {
+        installmentNumber = paidAmount === 0 ? 1 : 2;
+      } else if (paymentPlan === "milestone") {
+        installmentNumber = Math.floor(paidAmount / (totalFee / 4)) + 1;
+      }
+      
       // Create payment record
       const { data: payment, error } = await supabase
         .from("payments")
         .insert({
           application_id: applicationId,
+          user_id: user.id,
           amount: amount,
           processing_fee: processingFee,
           total_amount: totalAmount,
           payment_method: selectedMethod,
+          installment_number: installmentNumber,
           status: "pending",
-          installment_number: paymentPlan === "deferred" && paidAmount === 0 ? 1 : 2
         })
         .select("id")
         .single();
@@ -104,11 +142,18 @@ export const PaymentFlow = ({
 
       // Update application paid amount
       const newPaidAmount = paidAmount + amount;
+      let newStatus = "payment_pending";
+      if (newPaidAmount >= totalFee) {
+        newStatus = "payment_complete";
+      } else if (newPaidAmount > 0) {
+        newStatus = "partially_paid";
+      }
+      
       const { error: updateError } = await supabase
         .from("applications")
         .update({ 
           paid_amount: newPaidAmount,
-          status: newPaidAmount >= totalFee ? "payment_complete" : "payment_pending"
+          status: newStatus
         })
         .eq("id", applicationId);
       
@@ -118,7 +163,7 @@ export const PaymentFlow = ({
       await supabase
         .from("notifications")
         .insert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.id,
           type: "success",
           title: "Payment Initiated",
           message: `Payment of $${amount} has been successfully initiated.`,
@@ -179,14 +224,18 @@ export const PaymentFlow = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full">
+        <Button className="w-full gap-2">
+          <CreditCard className="w-4 h-4" />
           Make Payment
         </Button>
       </DialogTrigger>
       
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Make Payment</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Make Payment
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -198,15 +247,15 @@ export const PaymentFlow = ({
             </div>
             <div className="flex justify-between mb-2">
               <span className="text-sm text-muted-foreground">Total Fee</span>
-              <span className="font-medium">${totalFee}</span>
+              <span className="font-medium">${totalFee.toLocaleString()}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span className="text-sm text-muted-foreground">Already Paid</span>
-              <span className="text-green-600">${paidAmount}</span>
+              <span className="text-green-600">${paidAmount.toLocaleString()}</span>
             </div>
             <div className="flex justify-between pt-2 border-t">
               <span className="text-sm font-semibold">Balance Due</span>
-              <span className="font-bold text-lg text-amber-600">${balanceDue}</span>
+              <span className="font-bold text-lg text-amber-600">${balanceDue.toLocaleString()}</span>
             </div>
           </div>
           
@@ -225,7 +274,7 @@ export const PaymentFlow = ({
                   <div className="text-center">
                     <div className="font-medium text-sm">{option.label}</div>
                     {option.amount > 0 && (
-                      <div className="font-bold text-lg">${option.amount}</div>
+                      <div className="font-bold text-lg">${option.amount.toLocaleString()}</div>
                     )}
                   </div>
                 </Button>
@@ -272,9 +321,15 @@ export const PaymentFlow = ({
             </RadioGroup>
           </div>
           
+          {/* Security Badge */}
+          <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg border border-green-200">
+            <Shield className="w-4 h-4" />
+            <span className="text-sm">Secure payment • 256-bit SSL encryption</span>
+          </div>
+          
           {/* Payment Summary */}
           {amount && amount > 0 && (
-            <div className="bg-primary/5 p-4 rounded-lg">
+            <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
               <div className="flex justify-between mb-2">
                 <span className="text-sm">Payment Amount</span>
                 <span className="font-medium">${amount.toFixed(2)}</span>
@@ -285,9 +340,9 @@ export const PaymentFlow = ({
                   ${calculateProcessingFee().toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between pt-2 border-t">
+              <div className="flex justify-between pt-2 border-t border-primary/20">
                 <span className="font-semibold">Total to Pay</span>
-                <span className="font-bold text-lg">
+                <span className="font-bold text-lg text-primary">
                   ${totalAmount.toFixed(2)}
                 </span>
               </div>
