@@ -5,73 +5,73 @@ import { ApplicationData } from "@/pages/Apply";
 const paymentPlans = [
   {
     id: "milestone" as const,
-    name: "Smart Milestone Plan",
+    name: "Milestone Payment Plan",
     price: "$4,999",
     originalPrice: "$5,500",
-    description: "The most popular choice for smart applicants who want control and flexibility",
+    description: "Structured payments aligned with your application progress",
     features: [
-      "✅ Pay only when milestones are successfully completed",
-      "🚀 Front-loaded success: Start with just $499",
-      "🎯 Risk-free: Cancel anytime before next milestone",
-      "👑 Priority support throughout your journey",
-      "📈 Value grows as you progress",
-      "🛡️ 100% money-back guarantee on incomplete milestones",
+      "Pay only upon successful milestone completion",
+      "Initial investment of $499 to begin the process",
+      "Flexible cancellation before each milestone",
+      "Priority support throughout the process",
+      "Transparent pricing with no hidden fees",
+      "Full refund guarantee for incomplete milestones",
     ],
     milestones: [
-      { name: "Success Foundation", amount: "$499", description: "Initial consultation & strategy session" },
-      { name: "Document Excellence", amount: "$1,200", description: "CV optimization & portfolio building" },
-      { name: "Premium Job Matching", amount: "$1,800", description: "Direct employer introductions & interviews" },
-      { name: "Visa Victory & Relocation", amount: "$1,500", description: "Full visa processing & travel arrangement" },
+      { name: "Initial Consultation & Strategy", amount: "$499", description: "Comprehensive assessment and planning" },
+      { name: "Document Preparation", amount: "$1,200", description: "CV optimization and portfolio development" },
+      { name: "Employer Matching", amount: "$1,800", description: "Direct employer introductions and interviews" },
+      { name: "Visa Processing & Relocation", amount: "$1,500", description: "Complete visa processing and travel arrangements" },
     ],
-    icon: Target,
+    icon: Calendar,
     recommended: true,
-    tagline: "For the strategic applicant",
-    savings: "Save $500+ compared to competitors",
-    highlight: "Most flexible & risk-averse option"
+    tagline: "For applicants seeking structured flexibility",
+    savings: "Save $500 compared to standard rates",
+    highlight: "Most flexible payment structure"
   },
   {
     id: "full_upfront" as const,
-    name: "Elite Accelerator Plan",
+    name: "Full Upfront Payment",
     price: "$4,299",
     originalPrice: "$5,000",
-    description: "Maximum savings + VIP treatment for serious applicants ready to commit",
+    description: "Maximum savings with premium priority service",
     features: [
-      "🔥 15% instant savings - Pay just $4,299 instead of $5,000",
-      "⚡ Fast-track processing: Jump to front of the queue",
-      "👨‍💼 Dedicated success manager with 24/7 WhatsApp access",
-      "🎯 Guaranteed job interview within 30 days or money back",
-      "✈️ Free flight ticket & accommodation assistance",
-      "📋 Free spouse & dependents application included",
-      "🏆 Exclusive access to premium employer network",
+      "15% discount applied to total service fee",
+      "Expedited processing with priority queue placement",
+      "Dedicated case manager with direct communication access",
+      "Guaranteed interview scheduling within 30 days",
+      "Comprehensive relocation assistance package",
+      "Spouse and dependent application included",
+      "Access to premium employer network",
     ],
-    icon: Zap,
+    icon: DollarSign,
     recommended: false,
-    tagline: "Maximum value, minimum stress",
-    savings: "Save $701 instantly",
-    highlight: "VIP treatment & fastest processing"
+    tagline: "Maximum value with premium benefits",
+    savings: "Save $701 with upfront payment",
+    highlight: "Premium priority processing"
   },
   {
     id: "deferred" as const,
-    name: "Success-First Partnership",
+    name: "Success-Based Partnership",
     price: "$2,750 × 2 payments",
     originalPrice: "$6,500",
-    description: "We invest in your success - Pay only when you succeed",
+    description: "Aligned interests with performance-based payments",
     features: [
-      "💎 First payment: $2,750 after approval (start immediately)",
-      "🎯 Second payment: $2,750 ONLY after you secure job offer",
-      "⏱️ 6-month job guarantee period",
-      "🤝 We only win when you win - aligned incentives",
-      "💼 If no job in 6 months, pay NOTHING more",
-      "📊 Full financial risk protection",
-      "👔 Free LinkedIn optimization & professional branding",
-      "🎤 Unlimited interview coaching & negotiation training",
+      "First payment: $2,750 upon program approval",
+      "Second payment: $2,750 only after securing employment",
+      "Six-month employment guarantee period",
+      "Performance-aligned payment structure",
+      "Financial risk protection if employment not secured",
+      "Professional profile optimization included",
+      "Unlimited interview preparation and coaching",
+      "Salary negotiation training and support",
     ],
     icon: TrendingUp,
     recommended: false,
-    tagline: "No job, no full payment - Guaranteed",
-    savings: "Pay as you earn - Zero financial risk",
-    highlight: "Perfect for limited upfront budget",
-    note: "Total $5,500 (50% after approval + 50% after job secured)"
+    tagline: "Shared success, aligned incentives",
+    savings: "Performance-based payment structure",
+    highlight: "Minimal upfront financial commitment",
+    note: "Total $5,500 (50% upon approval + 50% after employment secured)"
   },
 ];
 
@@ -83,67 +83,68 @@ interface PaymentPlanStepProps {
 export const PaymentPlanStep = ({ data, onUpdate }: PaymentPlanStepProps) => {
   return (
     <div className="space-y-8">
-      {/* Hero Section */}
+      {/* Header Section */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
           <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-primary">Smart Investment, Brighter Future</span>
+          <span className="text-sm font-medium text-primary">Strategic Investment Options</span>
         </div>
-        <h2 className="font-heading text-3xl font-bold text-foreground mb-3">
-          Choose Your Success Path
+        <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-3">
+          Select Your Payment Plan
         </h2>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Your investment today opens doors to life-changing opportunities. 
-          Every plan comes with our <span className="font-semibold text-primary">98% success guarantee</span>.
+        <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto px-4">
+          Choose the payment structure that aligns with your financial preferences. 
+          All plans include our comprehensive support services and high success rate guarantee.
         </p>
       </div>
 
-      {/* Payment Plans */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Payment Plans - Responsive Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {paymentPlans.map((plan) => (
           <motion.div
             key={plan.id}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
             className="relative h-full"
           >
             {/* Recommended Badge */}
             {plan.recommended && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <div className="bg-gradient-to-r from-primary to-primary/80 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                <div className="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 whitespace-nowrap">
                   <Award className="w-3 h-3" />
-                  MOST POPULAR CHOICE
+                  RECOMMENDED
                 </div>
               </div>
             )}
 
             <button
               onClick={() => onUpdate({ paymentPlan: plan.id })}
-              className={`w-full h-full text-left p-6 rounded-2xl border-2 transition-all duration-300 flex flex-col ${
+              className={`w-full h-full text-left p-4 md:p-6 rounded-xl border-2 transition-all duration-200 flex flex-col ${
                 data.paymentPlan === plan.id
-                  ? "border-primary bg-gradient-to-b from-primary/5 to-transparent shadow-xl scale-[1.02]"
-                  : "border-border hover:border-primary/30 bg-card hover:shadow-lg"
-              } ${plan.recommended ? "pt-10" : ""}`}
+                  ? "border-primary bg-primary/5 shadow-lg"
+                  : "border-border hover:border-primary/20 bg-card hover:shadow-md"
+              } ${plan.recommended ? "pt-6 md:pt-10" : ""}`}
             >
               {/* Plan Header */}
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    data.paymentPlan === plan.id ? "bg-primary text-white" : "bg-gradient-to-br from-primary/10 to-primary/5"
+              <div className="mb-4 md:mb-6">
+                <div className="flex items-start gap-3 mb-2">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    data.paymentPlan === plan.id ? "bg-primary text-white" : "bg-primary/10 text-primary"
                   }`}>
                     <plan.icon className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h3 className="font-heading text-lg font-bold text-foreground">{plan.name}</h3>
-                    <p className="text-xs text-muted-foreground">{plan.tagline}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-heading text-lg font-bold text-foreground truncate">{plan.name}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{plan.tagline}</p>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{plan.description}</p>
               </div>
 
               {/* Price Section */}
-              <div className="mb-6">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-heading text-3xl font-bold text-foreground">
+              <div className="mb-4 md:mb-6">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="font-heading text-2xl md:text-3xl font-bold text-foreground">
                     {plan.price}
                   </span>
                   {plan.originalPrice && (
@@ -153,7 +154,7 @@ export const PaymentPlanStep = ({ data, onUpdate }: PaymentPlanStepProps) => {
                   )}
                 </div>
                 {plan.savings && (
-                  <div className="mt-1 px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full inline-flex items-center gap-1">
+                  <div className="mt-2 px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full inline-flex items-center gap-1 border border-green-100">
                     <CheckCircle className="w-3 h-3" />
                     {plan.savings}
                   </div>
@@ -164,39 +165,39 @@ export const PaymentPlanStep = ({ data, onUpdate }: PaymentPlanStepProps) => {
               </div>
 
               {/* Features List */}
-              <div className="flex-1 mb-6">
+              <div className="flex-1 mb-4 md:mb-6">
                 <ul className="space-y-2">
-                  {plan.features.slice(0, 6).map((feature, index) => (
+                  {plan.features.slice(0, 4).map((feature, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm">
-                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-green-100 text-green-600 flex items-center justify-center mt-0.5">
+                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-green-50 text-green-600 flex items-center justify-center mt-0.5">
                         <CheckCircle className="w-3 h-3" />
                       </div>
-                      <span className="text-foreground">{feature}</span>
+                      <span className="text-foreground leading-relaxed">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Milestones for Smart Plan */}
+              {/* Milestones Section */}
               {plan.milestones && (
-                <div className="mt-4 pt-4 border-t border-border/50">
-                  <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-primary" />
-                    Strategic Payment Schedule
+                <div className="mt-3 pt-3 border-t border-border/30">
+                  <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <Target className="w-4 h-4 text-primary" />
+                    Structured Payment Schedule
                   </p>
                   <div className="space-y-2">
                     {plan.milestones.map((milestone, index) => (
-                      <div key={milestone.name} className="flex items-center justify-between text-sm">
+                      <div key={milestone.name} className="flex flex-col sm:flex-row sm:items-center justify-between text-sm gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold flex-shrink-0">
                             {index + 1}
                           </div>
-                          <div>
-                            <div className="font-medium text-foreground">{milestone.name}</div>
-                            <div className="text-xs text-muted-foreground">{milestone.description}</div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-foreground truncate">{milestone.name}</div>
+                            <div className="text-xs text-muted-foreground truncate">{milestone.description}</div>
                           </div>
                         </div>
-                        <span className="font-bold text-primary">{milestone.amount}</span>
+                        <span className="font-bold text-primary sm:pl-2 sm:text-right">{milestone.amount}</span>
                       </div>
                     ))}
                   </div>
@@ -204,18 +205,18 @@ export const PaymentPlanStep = ({ data, onUpdate }: PaymentPlanStepProps) => {
               )}
 
               {/* Selection Indicator */}
-              <div className="mt-6 pt-4 border-t border-border/50">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
+              <div className="mt-4 pt-3 border-t border-border/30">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded font-medium border border-blue-100">
                     {plan.highlight}
                   </div>
                   {data.paymentPlan === plan.id ? (
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center animate-pulse">
-                      <CheckCircle className="w-5 h-5 text-white" />
+                    <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center ml-auto sm:ml-0">
+                      <CheckCircle className="w-4 h-4 text-white" />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center">
-                      <div className="w-4 h-4 rounded-full border-2 border-border"></div>
+                    <div className="w-7 h-7 rounded-full border border-border flex items-center justify-center ml-auto sm:ml-0">
+                      <div className="w-3 h-3 rounded-full border border-border"></div>
                     </div>
                   )}
                 </div>
@@ -225,74 +226,84 @@ export const PaymentPlanStep = ({ data, onUpdate }: PaymentPlanStepProps) => {
         ))}
       </div>
 
-      {/* Key Benefits & Guarantees */}
+      {/* Key Benefits Section */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-primary/5 via-background to-primary/5 rounded-2xl p-8 border border-primary/20"
+        className="bg-muted/30 rounded-xl p-6 border"
       >
         <div className="text-center mb-6">
-          <h3 className="font-heading text-2xl font-bold text-foreground mb-2">
-            Why Choose CareWell Immigration?
+          <h3 className="font-heading text-xl md:text-2xl font-bold text-foreground mb-2">
+            Comprehensive Service Guarantees
           </h3>
           <p className="text-muted-foreground">
-            Every plan includes these unbeatable benefits
+            All payment plans include our standard service guarantees
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           <div className="text-center p-4">
-            <div className="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-3">
-              <Shield className="w-6 h-6" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-green-50 text-green-600 flex items-center justify-center mx-auto mb-3">
+              <Shield className="w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <h4 className="font-semibold text-foreground mb-2">Triple Guarantee</h4>
-            <p className="text-sm text-muted-foreground">
-              1. Job interview guarantee<br />
-              2. Visa approval guarantee<br />
-              3. Money-back guarantee
+            <h4 className="font-semibold text-foreground mb-2">Service Guarantees</h4>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+              Interview scheduling guarantee within specified timeframe. 
+              Comprehensive visa application support. Transparent refund policies.
             </p>
           </div>
           
           <div className="text-center p-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-3">
-              <Clock className="w-6 h-6" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
+              <Clock className="w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <h4 className="font-semibold text-foreground mb-2">Lightning Fast</h4>
-            <p className="text-sm text-muted-foreground">
-              Average placement: 45 days<br />
-              24/7 support available<br />
-              Emergency travel assistance
+            <h4 className="font-semibold text-foreground mb-2">Processing Efficiency</h4>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+              Average placement timeline of 45 days. 
+              Continuous support throughout the process. 
+              Travel coordination services.
             </p>
           </div>
           
           <div className="text-center p-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mx-auto mb-3">
-              <Briefcase className="w-6 h-6" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-3">
+              <Briefcase className="w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <h4 className="font-semibold text-foreground mb-2">Premium Network</h4>
-            <p className="text-sm text-muted-foreground">
-              Access to 500+ employers<br />
-              Average salary: $85,000+<br />
-              Spouse employment assistance
+            <h4 className="font-semibold text-foreground mb-2">Employer Network</h4>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+              Access to extensive employer partnerships. 
+              Competitive salary opportunities. 
+              Family employment assistance available.
             </p>
           </div>
         </div>
       </motion.div>
 
-      {/* Final CTA */}
+      {/* Performance Metrics */}
       <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-4">
-          <span className="font-bold text-primary">1,234+</span> successful placements this year • 
-          <span className="font-bold text-green-600 ml-2">4.9/5</span> client satisfaction
-        </p>
+        <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-4">
+          <div className="text-center">
+            <div className="text-2xl md:text-3xl font-bold text-primary">1,234+</div>
+            <div className="text-xs md:text-sm text-muted-foreground">Successful Placements</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl md:text-3xl font-bold text-green-600">98%</div>
+            <div className="text-xs md:text-sm text-muted-foreground">Success Rate</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl md:text-3xl font-bold text-blue-600">4.9/5</div>
+            <div className="text-xs md:text-sm text-muted-foreground">Client Satisfaction</div>
+          </div>
+        </div>
+        
         {data.paymentPlan && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-block p-4 bg-gradient-to-r from-primary/10 to-green-100 rounded-xl"
+            className="inline-block p-3 md:p-4 bg-primary/5 rounded-lg border border-primary/10"
           >
-            <p className="font-semibold text-foreground">
-              Smart choice! You selected: <span className="text-primary">{paymentPlans.find(p => p.id === data.paymentPlan)?.name}</span>
+            <p className="font-semibold text-foreground text-sm md:text-base">
+              Selected Plan: <span className="text-primary">{paymentPlans.find(p => p.id === data.paymentPlan)?.name}</span>
             </p>
           </motion.div>
         )}
