@@ -18,8 +18,8 @@ const requiredDocuments = [
   { type: "resume", name: "Resume/CV", required: true },
   { type: "photo", name: "Passport-size Photo", required: true },
   { type: "education", name: "Educational Certificates", required: false },
-  { type: "passport", name: "Passport (First & Last Page)", required: false },
   { type: "experience", name: "Work Experience Letters", required: false },
+  { type: "passport", name: "Passport (First & Last Page)", required: false },
   { type: "other", name: "Other Supporting Documents", required: false },
 ];
 
