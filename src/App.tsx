@@ -1,4 +1,4 @@
-// Update src/App.tsx - add Profile import and routes
+// Update src/App.tsx - add Profile and Payments imports and routes
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,6 +33,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 // Add Profile imports
 const Profile = lazy(() => import("./pages/profile/profile"));
 const ProfileEdit = lazy(() => import("./pages/profile/ProfileEdit"));
+
+// Add Payments import
+const Payments = lazy(() => import("./pages/Payments"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,10 +74,13 @@ const App = () => (
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 
-                {/* ===== ADD PROFILE ROUTES HERE ===== */}
+                {/* ===== PROFILE ROUTES ===== */}
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/:profileId" element={<Profile />} />
                 <Route path="/profile/edit" element={<ProfileEdit />} />
+                
+                {/* ===== PAYMENTS ROUTE ===== */}
+                <Route path="/payments" element={<Payments />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
