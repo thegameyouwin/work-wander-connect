@@ -24,7 +24,10 @@ import {
   X,
   MessageSquare,
   Download,
-  Upload
+  Upload,
+  AlertTriangle,
+  CheckCircle,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +47,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { PaymentFlow } from "@/components/dashboard/PaymentFlow";
 import logo from "@/assets/logo.png";
 
 interface Application {
@@ -56,6 +60,7 @@ interface Application {
   application_type: string;
   visa_type?: string;
   current_step?: string;
+  user_id: string;
 }
 
 interface JobApplication {
@@ -85,6 +90,7 @@ interface DashboardStats {
   pendingPayments: number;
   upcomingDeadlines: number;
   totalDocuments: number;
+  totalPayments: number;
 }
 
 const Dashboard = () => {
@@ -100,6 +106,7 @@ const Dashboard = () => {
     pendingPayments: 0,
     upcomingDeadlines: 0,
     totalDocuments: 0,
+    totalPayments: 0,
   });
   const [dataLoading, setDataLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -117,12 +124,15 @@ const Dashboard = () => {
   }, [user]);
 
   const fetchDashboardData = async () => {
+    if (!user) return;
+    
     setDataLoading(true);
     try {
-      // Fetch applications
+      // Fetch applications for this user
       const { data: appsData } = await supabase
         .from("applications")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       
       setApplications((appsData || []) as Application[]);
@@ -141,6 +151,7 @@ const Dashboard = () => {
           applied_at,
           job:jobs(title, company, location, salary)
         `)
+        .eq("user_id", user.id)
         .order("applied_at", { ascending: false })
         .limit(5);
       
@@ -156,18 +167,32 @@ const Dashboard = () => {
       const { data: notifData } = await supabase
         .from("notifications")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(5);
       
       setNotifications((notifData || []) as Notification[]);
+
+      // Fetch documents count
+      const { count: documentsCount } = await supabase
+        .from("documents")
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", user.id);
+
+      // Fetch payments count
+      const { count: paymentsCount } = await supabase
+        .from("payments")
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", user.id);
 
       // Update stats
       setStats({
         totalApplications: (appsData || []).length,
         totalJobsApplied: (jobAppsData || []).length,
         pendingPayments: pendingPaymentsCount,
-        upcomingDeadlines: 2,
-        totalDocuments: 3, // This could be fetched from documents table
+        upcomingDeadlines: 0,
+        totalDocuments: documentsCount || 0,
+        totalPayments: paymentsCount || 0,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -203,12 +228,17 @@ const Dashboard = () => {
       case 'approved':
       case 'accepted':
       case 'job_matched':
+      case 'payment_complete':
         return <CheckCircle2 className="w-4 h-4" />;
       case 'pending':
       case 'under_review':
+      case 'payment_pending':
         return <Clock className="w-4 h-4" />;
       case 'pending_documents':
-        return <AlertCircle className="w-4 h-4" />;
+      case 'partially_paid':
+        return <AlertTriangle className="w-4 h-4" />;
+      case 'submitted':
+        return <FileUp className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
     }
@@ -221,6 +251,10 @@ const Dashboard = () => {
       pending_documents: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
       approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
       job_matched: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      payment_complete: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      payment_pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+      partially_paid: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
+      draft: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
       applied: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
       pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
       accepted: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
@@ -276,6 +310,10 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
+  };
+
+  const handleViewPayments = () => {
+    navigate("/payments");
   };
 
   if (loading || dataLoading) {
@@ -344,7 +382,7 @@ const Dashboard = () => {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo - Using the same logo as Navbar */}
+            {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <img 
                 src={logo} 
@@ -364,6 +402,9 @@ const Dashboard = () => {
                 </Link>
                 <Link to="/jobs" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                   Jobs
+                </Link>
+                <Link to="/payments" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                  Payments
                 </Link>
                 <Link to="/documents" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                   Documents
@@ -417,6 +458,14 @@ const Dashboard = () => {
                       >
                         <Briefcase className="w-5 h-5" />
                         Jobs
+                      </Link>
+                      <Link 
+                        to="/payments" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <CreditCard className="w-5 h-5" />
+                        Payments
                       </Link>
                       <Link 
                         to="/documents" 
@@ -589,6 +638,13 @@ const Dashboard = () => {
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem 
+                    onClick={() => navigate("/payments")} 
+                    className="cursor-pointer"
+                  >
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Payments
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
                     onClick={() => navigate("/settings")} 
                     className="cursor-pointer"
                   >
@@ -642,12 +698,10 @@ const Dashboard = () => {
                   View Applications
                 </Button>
               )}
-              <Link to="/jobs">
-                <Button variant="outline" className="gap-2">
-                  <Briefcase className="w-4 h-4" />
-                  Find Jobs
-                </Button>
-              </Link>
+              <Button variant="outline" className="gap-2" onClick={handleViewPayments}>
+                <CreditCard className="w-4 h-4" />
+                Payment History
+              </Button>
             </div>
           </div>
         </motion.div>
@@ -690,7 +744,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="overflow-hidden border-none shadow-sm">
+              <Card className="overflow-hidden border-none shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -759,7 +813,7 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">Application Type</p>
-                        <p className="font-medium">{primaryApplication.application_type || "Work Visa"}</p>
+                        <p className="font-medium capitalize">{primaryApplication.application_type || "Work Visa"}</p>
                       </div>
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">Started On</p>
@@ -767,7 +821,7 @@ const Dashboard = () => {
                       </div>
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">Payment Plan</p>
-                        <p className="font-medium">{primaryApplication.payment_plan || "Standard Plan"}</p>
+                        <p className="font-medium capitalize">{primaryApplication.payment_plan || "Standard Plan"}</p>
                       </div>
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">Balance Due</p>
@@ -783,11 +837,35 @@ const Dashboard = () => {
                         <Upload className="w-4 h-4" />
                         Upload Documents
                       </Button>
-                      <Button className="gap-2" onClick={() => navigate("/payments")}>
-                        <CreditCard className="w-4 h-4" />
-                        Make Payment
-                      </Button>
+                      
+                      {primaryApplication && totalBalance > 0 ? (
+                        <PaymentFlow 
+                          applicationId={primaryApplication.id}
+                          totalFee={primaryApplication.total_fee}
+                          paidAmount={primaryApplication.paid_amount}
+                          paymentPlan={primaryApplication.payment_plan}
+                          balanceDue={totalBalance}
+                          onPaymentSuccess={fetchDashboardData}
+                        />
+                      ) : (
+                        <Button variant="outline" className="gap-2">
+                          <CheckCircle className="w-4 h-4" />
+                          Payment Complete
+                        </Button>
+                      )}
                     </div>
+
+                    {/* Payment Tip */}
+                    {totalBalance > 0 && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4" />
+                          <span>
+                            <strong>Tip:</strong> Complete your payment to move forward with your application processing.
+                          </span>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8">
@@ -930,6 +1008,12 @@ const Dashboard = () => {
                       }
                     </span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Total Payments</span>
+                    <span className="font-medium text-green-600">
+                      {stats.totalPayments} transactions
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex gap-2">
@@ -1036,10 +1120,10 @@ const Dashboard = () => {
                 <Button 
                   variant="outline" 
                   className="h-auto py-3 flex-col gap-2" 
-                  onClick={() => navigate("/payments")}
+                  onClick={handleViewPayments}
                 >
-                  <CreditCard className="w-5 h-5" />
-                  <span className="text-xs">Make Payment</span>
+                  <Eye className="w-5 h-5" />
+                  <span className="text-xs">View Payments</span>
                 </Button>
                 
                 <Button 
@@ -1093,9 +1177,9 @@ const Dashboard = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate("/documents")}
+            onClick={handleViewPayments}
           >
-            <FileText className="w-5 h-5" />
+            <CreditCard className="w-5 h-5" />
           </Button>
           <Button 
             variant="ghost" 
